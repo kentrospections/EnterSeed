@@ -2,6 +2,41 @@
 const menuToggle = document.querySelector(".menu-toggle");
 const primaryNav = document.querySelector("#primary-nav");
 
+const siteNavItems = [
+  { href: "index.html", label: "Home" },
+  { href: "boss-nana.html", label: "Boss Narra" },
+  { href: "efiling.html", label: "Business tools" },
+  { href: "suppliers.html", label: "Supplier Hub" },
+  { href: "pricing.html", label: "Pricing" },
+  { href: "about.html", label: "About Us" }
+];
+
+if (primaryNav) {
+  const navLinks = siteNavItems.map(({ href, label }) => {
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = label;
+    link.dataset.pageLink = "true";
+    return link;
+  });
+  primaryNav.replaceChildren(...navLinks);
+}
+
+const headerInner = document.querySelector(".site-header .header-inner");
+if (headerInner) {
+  const existingCta = headerInner.querySelector(":scope > .header-cta");
+  if (existingCta) existingCta.remove();
+  if (!headerInner.querySelector(".header-actions")) {
+    const headerActions = document.createElement("div");
+    headerActions.className = "header-actions";
+    headerActions.innerHTML = `
+      <a class="button button-outline header-cta" href="login.html"><span class="header-cta-label">Log in</span></a>
+      <a class="button button-dark header-cta" href="register.html"><span class="header-cta-label">Create account</span></a>
+    `;
+    headerInner.appendChild(headerActions);
+  }
+}
+
 /** Update the mobile menu state and its accessible label. */
 /** Toggle the responsive navigation and synchronize its expanded state. */
 menuToggle?.addEventListener("click", () => {

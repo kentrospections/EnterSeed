@@ -1,0 +1,70 @@
+{
+  "locale": "hil",
+  "messages": {
+    "common": {
+      "english": "English",
+      "filipino": "Filipino (Tagalog)",
+      "hiligaynon": "Hiligaynon"
+    },
+    "appShell": {
+      "dashboard": "Dashboard",
+      "finance": "Panalapi",
+      "marketing": "Marketing",
+      "documents": "Mga dokumento",
+      "bossNana": "Boss Narra",
+      "profile": "Profile",
+      "primaryNavigation": "Panguna nga nabigasyon",
+      "mobileNavigation": "Nabigasyon sa mobile",
+      "breadcrumbs": "Lokasyon sang pahina",
+      "sidebarNote": "Mga lokal nga gamit para sa negosyo sa South Cotabato.",
+      "financeBreadcrumb": "Assessment",
+      "marketingBreadcrumb": "Strategy",
+      "documentsBreadcrumb": "Filing kag practice set",
+      "assistantBreadcrumb": "Assistant",
+      "askBossNana": "Pamangkot kay Boss Narra",
+      "logout": "Mag-log out",
+      "logoutError": "Indi maka-log out. Palihog sulayi liwat."
+    },
+    "bossNana": {
+      "eyebrow": "Workspace sang Boss Narra",
+      "heroTitle": "Magpadayon sang mas maayo nga paglago ka Boss Narra.",
+      "heroTitleBefore": "Mag-uswag sing mas maalam upod kay",
+      "heroLead": "Si Boss Narra amo ang grounded AI advisor para sa MSME, nga nagabulig sa pag-intiendihon sang financing, marketing, kag filing process gamit ang lokal nga konteksto kag tiya nga source links.",
+      "languageButton": "Pili-a ang wika",
+      "onboardingButton": "Buksan ang onboarding",
+      "stat1": "mga pangunahing module",
+      "stat2": "mga opsyon sang wika",
+      "stat3": "gabay para sa SME",
+      "assistantStatus": "AI advisor nga may basis",
+      "msg1": "Makabulig ako sa pag-compare sang mga financing option, pag-intindi sang DTI filing steps, kag pagplano sang sunod nga marketing move.",
+      "msg2": "Kinahanglan namon ang mas klaro nga payback plan para sa aton cash flow.",
+      "msg3": "Tignan naton ang timing sang cash cycle, debt exposure, kag compliance gaps, kag i-map ini sa sunod nga mga action steps.",
+      "moduleSubhead": "Ang tagsa ka module nagapadugang sang lokal nga konteksto, opisyal nga sanggunian, kag maayo nga recordkeeping para sa mga desisyon sa operasyon."
+    },
+    "finance": {
+      "title": "Pagsusi sang panalapi",
+      "income": "Bulanan nga kita sang negosyo",
+      "expenses": "Bulanan nga gasto sa operasyon",
+      "cash": "Cash kag balanse sa bangko",
+      "debt": "Nabilin nga utang sang negosyo",
+      "taxStanding": "Kahimtangan sang tax filing",
+      "save": "I-save ang assessment kag tan-awa ang rekomendasyon",
+      "delete": "Delete ang na-save nga assessment",
+      "empty": "Kompletoha kag i-save ang assessment agod makita ang mga estimate.",
+      "estimateDisclaimer": "Mga estimate ini halin lang sa imo ginbutang; indi ini audited nga report, propesyonal nga laygay, ukon opisyal nga assessment."
+    },
+    "chatbot": {
+      "name": "Boss Narra",
+      "status": "Giya sa negosyo para sa MSME",
+      "close": "Isira si Boss Narra",
+      "label": "Pamangkot kay Boss Narra",
+      "placeholder": "Pamangkot parte sa panalapi, marketing, ukon opisyal nga impormasyon…",
+      "send": "Ipadala",
+      "sources": "Opisyal nga mga link para sa beripikasyon",
+      "waiting": "Gina-usisa ang mga available nga reperensya…",
+      "disclaimer": "Para sa impormasyon lamang. Wala ginakuha nga opisyal nga pahina sa sini nga chat; usisaa ang mga regulasyon direkta sa DTI, DOST, ukon BIR.",
+      "unavailable": "Indi maabot ni Boss Narra ang serbisyo. Palihog sulayi liwat."
+    }
+  },
+  "legacy": {}
+}

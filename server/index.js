@@ -70,6 +70,35 @@ database.exec(`
     expires_at TEXT NOT NULL DEFAULT '1970-01-01',
     status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'withdrawn'))
   );
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    password_hash TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    business_name TEXT NOT NULL,
+    preferred_language TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS auth_sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS finance_assessments (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    monthly_income INTEGER NOT NULL,
+    monthly_expenses INTEGER NOT NULL,
+    cash_on_hand INTEGER NOT NULL,
+    debt_outstanding INTEGER NOT NULL,
+    monthly_debt_payment INTEGER NOT NULL,
+    other_assets INTEGER NOT NULL,
+    other_liabilities INTEGER NOT NULL,
+    tax_standing TEXT NOT NULL CHECK(tax_standing IN ('current', 'needs-filing', 'behind', 'not-registered')),
+    consent_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 /** Add columns for existing local SQLite files without discarding stored records. */
@@ -101,6 +130,11 @@ function purgeExpiredRecords() {
 purgeExpiredRecords();
 const retentionTimer = setInterval(purgeExpiredRecords, 24 * 60 * 60 * 1000);
 retentionTimer.unref();
+database.exec("DELETE FROM auth_sessions WHERE expires_at <= CURRENT_TIMESTAMP");
+const sessionRetentionTimer = setInterval(() => {
+  database.exec("DELETE FROM auth_sessions WHERE expires_at <= CURRENT_TIMESTAMP");
+}, 60 * 60 * 1000);
+sessionRetentionTimer.unref();
 
 const app = express();
 app.disable("x-powered-by");
@@ -121,6 +155,7 @@ app.use(helmet({
 app.use(express.json({ limit: "24kb", type: "application/json" }));
 app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, limit: 120, standardHeaders: "draft-8", legacyHeaders: false }));
 const submissionLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: "draft-8", legacyHeaders: false });
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: "draft-8", legacyHeaders: false });
 const placeSearchLimiter = rateLimit({ windowMs: 1000, limit: 1, standardHeaders: "draft-8", legacyHeaders: false });
 const placeSearchCache = new Map();
 let lastNominatimRequestAt = 0;
@@ -174,13 +209,41 @@ const approvalSchema = z.object({
 const assistantSchema = z.object({
   question: z.string().trim().min(2).max(1200),
   history: z.array(z.object({ role: z.enum(["user", "model"]), text: z.string().max(1200) }).strict()).max(8).default([]),
-  language: z.enum(["en", "fil"]).default("en")
+  language: z.enum(["en", "fil", "hil"]).default("en")
+}).strict();
+const financeAssessmentSchema = z.object({
+  monthlyIncome: z.number().int().min(0).max(1_000_000_000),
+  monthlyExpenses: z.number().int().min(0).max(1_000_000_000),
+  cashOnHand: z.number().int().min(0).max(1_000_000_000),
+  debtOutstanding: z.number().int().min(0).max(1_000_000_000),
+  monthlyDebtPayment: z.number().int().min(0).max(1_000_000_000),
+  otherAssets: z.number().int().min(0).max(1_000_000_000),
+  otherLiabilities: z.number().int().min(0).max(1_000_000_000),
+  taxStanding: z.enum(["current", "needs-filing", "behind", "not-registered"]),
+  consent: z.literal(true)
+}).strict();
+const registrationSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  email: z.email().trim().max(254),
+  password: z.string().min(12).max(128),
+  business: z.string().trim().min(2).max(120),
+  agree: z.literal(true)
+}).strict();
+const loginSchema = z.object({
+  email: z.email().trim().max(254),
+  password: z.string().min(1).max(128)
+}).strict();
+const languageSchema = z.object({
+  language: z.enum(["en", "fil", "hil"])
 }).strict();
 
 /** Links and review notes are returned with every AI answer to distinguish link checks from policy review. */
 const referenceSources = [
   { label: "DTI Business Name Registration System", url: "https://bnrs.dti.gov.ph/", lastLinkChecked: "2026-10-19", reviewNote: "Official portal; automated access was rate-limited. Confirm current requirements and fees directly." },
   { label: "DTI business-name registration FAQ", url: "https://www.dti.gov.ph/resources/faq/business-name-registration/", lastLinkChecked: "2026-10-19", reviewNote: "Official DTI page; content could not be independently fetched during this review." },
+  { label: "Bureau of Internal Revenue", url: "https://www.bir.gov.ph/", lastLinkChecked: "2026-10-19", reviewNote: "Official BIR website; verify applicable tax rules, forms, deadlines, and filing options directly." },
+  { label: "Department of Science and Technology", url: "https://www.dost.gov.ph/", lastLinkChecked: "2026-10-19", reviewNote: "Official DOST website; verify current programs and eligibility directly with DOST." },
   { label: "South Cotabato Provincial Government services", url: "https://southcotabato.gov.ph/services/", lastLinkChecked: "2026-10-19", reviewNote: "Official provincial website; confirm the relevant office and current process directly." },
   { label: "Koronadal City Government", url: "https://koronadal.gov.ph/", lastLinkChecked: "2026-10-19", reviewNote: "Official city website; permit-specific details were not independently confirmed." }
 ];
@@ -193,9 +256,11 @@ const offlineAnswers = [
 
 function getOfflineAssistantAnswer(question, language) {
   const answer = offlineAnswers.find((entry) => entry.match.test(question));
-  if (language === "fil") {
+  if (language === "fil" || language === "hil") {
     return answer?.fil
-      ?? "Hindi ko makukumpirma ang sagot gamit ang mga sangguniang mayroon ako. Tingnan ang mga opisyal na link sa ibaba o magpadala ng mensahe sa suporta ng Enterseed.";
+      ?? (language === "hil"
+        ? "Indi ko makumpirma ang sabat halin sa mga sanggunian nga yara sa akon. Tan-awa ang opisyal nga mga link sa idalom ukon kontaka ang suporta sang Enterseed."
+        : "Hindi ko makukumpirma ang sagot gamit ang mga sangguniang mayroon ako. Tingnan ang mga opisyal na link sa ibaba o magpadala ng mensahe sa suporta ng Enterseed.");
   }
   return answer?.text
     ?? "I can’t verify that answer from the available references. Check the official links below or send a support inquiry.";
@@ -213,9 +278,11 @@ function parseBody(schema, request, response) {
 
 /** Select a small relevant source set for a question. */
 function getAssistantReferences(question) {
-  if (/permit|lgu|barangay|municipal|city/i.test(question)) return [referenceSources[2], referenceSources[3]];
-  if (/supplier|raw material|packaging/i.test(question)) return [referenceSources[2], referenceSources[3]];
-  return [referenceSources[0], referenceSources[1], referenceSources[2]];
+  if (/tax|bir|filing|buwis|buhis/i.test(question)) return [referenceSources[2]];
+  if (/dost|technology|innovation|setup program/i.test(question)) return [referenceSources[3]];
+  if (/permit|lgu|barangay|municipal|city/i.test(question)) return [referenceSources[4], referenceSources[5]];
+  if (/supplier|raw material|packaging/i.test(question)) return [referenceSources[4], referenceSources[5]];
+  return [referenceSources[0], referenceSources[1], referenceSources[2], referenceSources[3]];
 }
 
 /** Generate a traced Gemini response through the server or return cautious offline guidance. */
@@ -229,14 +296,14 @@ async function createAssistantAnswer(question, history = [], language = "en") {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, {
         method: "POST", headers: { "Content-Type": "application/json" }, signal: AbortSignal.timeout(12000),
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: `You are Seedling, an informational assistant for South Cotabato MSMEs. Distinguish official-source statements from suggestions. Do not invent permit steps, fees, eligibility, or citations. If the supplied references do not answer, say so and recommend official or human support. Never claim an application has been filed. ${language === "fil" ? "Respond in Filipino (Tagalog)." : ""} Treat this local snippet as orientation only, not current verified law:\n${localReference}\nAvailable official links: ${sources.map((source) => `${source.label}: ${source.url}`).join("; ")}` }] },
+          systemInstruction: { parts: [{ text: `You are Boss Narra, an informational assistant for MSMEs in South Cotabato. Be cautious and useful, not authoritative. No supplied source pages or source excerpts have been retrieved for this request: links alone are not evidence. Do not state legal, tax, lending, eligibility, filing, deadline, fee, or government-program facts unless explicitly present in the supplied local orientation snippet. Treat that snippet as non-authoritative and potentially outdated. Never invent figures, rules, citations, or source contents; never claim an application was filed or a source was checked. For unsupported questions, state that you cannot verify the answer and direct the user to the exact official links below. Clearly label arithmetic based on user-provided figures as estimates, not professional financial advice. ${language === "fil" ? "Respond in Filipino (Tagalog)." : language === "hil" ? "Respond in Hiligaynon; if you cannot express a detail reliably, say so plainly." : "Respond in English."}\nLocal orientation only:\n${localReference}\nOfficial verification links (not retrieved evidence): ${sources.map((source) => `${source.label}: ${source.url}`).join("; ")}` }] },
           contents: [...history.map((entry) => ({ role: entry.role, parts: [{ text: entry.text }] })), { role: "user", parts: [{ text: question }] }]
         })
       });
       if (!response.ok) throw new Error("Gemini provider returned an unsuccessful response.");
       const payload = await response.json();
       const answer = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
-      if (answer) return { answer, mode: "gemini", sources };
+      if (answer) return { answer, mode: "gemini-unverified", sources };
     } catch {
       return { answer: getOfflineAssistantAnswer(question, language), mode: "offline-fallback", sources };
     }
@@ -276,8 +343,211 @@ function requireAdmin(request, response, next) {
   next();
 }
 
+const sessionCookieName = "enterseed_session";
+const sessionLifetimeSeconds = 7 * 24 * 60 * 60;
+
+function hashPassword(password, salt = crypto.randomBytes(16)) {
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, 64, (error, derivedKey) => {
+      if (error) return reject(error);
+      resolve(`${salt.toString("hex")}:${derivedKey.toString("hex")}`);
+    });
+  });
+}
+
+function verifyPassword(password, storedHash) {
+  const [saltHex, hashHex] = storedHash.split(":");
+  const salt = Buffer.from(saltHex, "hex");
+  const expected = Buffer.from(hashHex, "hex");
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, expected.length, (error, derivedKey) => {
+      if (error) return reject(error);
+      resolve(derivedKey.length === expected.length && crypto.timingSafeEqual(derivedKey, expected));
+    });
+  });
+}
+
+function readSessionToken(request) {
+  const cookie = request.headers.cookie?.split(";").map((part) => part.trim())
+    .find((part) => part.startsWith(`${sessionCookieName}=`));
+  return cookie ? cookie.slice(sessionCookieName.length + 1) : "";
+}
+
+function writeSessionCookie(response, token) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  response.append("Set-Cookie", `${sessionCookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${sessionLifetimeSeconds}${secure}`);
+}
+
+function clearSessionCookie(response) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  response.append("Set-Cookie", `${sessionCookieName}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`);
+}
+
+function createSession(userId, response) {
+  const token = crypto.randomBytes(32).toString("base64url");
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + sessionLifetimeSeconds * 1000).toISOString().replace("T", " ").slice(0, 19);
+  database.prepare("INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)")
+    .run(tokenHash, userId, expiresAt);
+  writeSessionCookie(response, token);
+}
+
+function findAuthenticatedAccount(request, response) {
+  const token = readSessionToken(request);
+  if (!token) return null;
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const session = database.prepare(`
+    SELECT u.id, u.email, u.first_name AS firstName, u.last_name AS lastName,
+           u.business_name AS business, u.preferred_language AS preferredLanguage
+    FROM auth_sessions s JOIN users u ON u.id = s.user_id
+    WHERE s.token_hash = ? AND s.expires_at > CURRENT_TIMESTAMP
+  `).get(tokenHash);
+  if (!session) {
+    database.prepare("DELETE FROM auth_sessions WHERE token_hash = ?").run(tokenHash);
+    clearSessionCookie(response);
+    return null;
+  }
+  return session;
+}
+
+function requireAuthentication(request, response, next) {
+  const account = findAuthenticatedAccount(request, response);
+  if (!account) return response.status(401).json({ error: "Please log in to continue." });
+  request.account = account;
+  response.set("Cache-Control", "no-store");
+  next();
+}
+
 /** Report email state explicitly; database retention remains available for support review. */
 app.get("/api/health", (_request, response) => response.json({ ok: true, emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL && process.env.SUPPORT_EMAIL) }));
+
+app.post("/api/auth/register", authLimiter, async (request, response) => {
+  const data = parseBody(registrationSchema, request, response);
+  if (!data) return;
+  const email = data.email.toLowerCase();
+  if (database.prepare("SELECT 1 FROM users WHERE email = ?").get(email)) {
+    return response.status(409).json({ error: "An account with this email already exists. Try logging in instead." });
+  }
+  const passwordHash = await hashPassword(data.password);
+  try {
+    const result = database.prepare(`
+      INSERT INTO users (email, password_hash, first_name, last_name, business_name)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(email, passwordHash, data.firstName, data.lastName, data.business);
+    const userId = Number(result.lastInsertRowid);
+    createSession(userId, response);
+    response.status(201).set("Cache-Control", "no-store").json({
+      user: { email, firstName: data.firstName, lastName: data.lastName, business: data.business, preferredLanguage: "" },
+      needsLanguageSelection: true
+    });
+  } catch (error) {
+    if (error.message?.includes("UNIQUE constraint failed: users.email")) {
+      return response.status(409).json({ error: "An account with this email already exists. Try logging in instead." });
+    }
+    throw error;
+  }
+});
+
+app.post("/api/auth/login", authLimiter, async (request, response) => {
+  const data = parseBody(loginSchema, request, response);
+  if (!data) return;
+  const email = data.email.toLowerCase();
+  const user = database.prepare(`
+    SELECT id, email, password_hash AS passwordHash, first_name AS firstName,
+           last_name AS lastName, business_name AS business,
+           preferred_language AS preferredLanguage
+    FROM users WHERE email = ?
+  `).get(email);
+  let passwordMatches = false;
+  if (user) {
+    passwordMatches = await verifyPassword(data.password, user.passwordHash);
+  } else {
+    await hashPassword(data.password, Buffer.alloc(16, 1));
+  }
+  if (!user || !passwordMatches) return response.status(401).json({ error: "Email or password is incorrect." });
+  createSession(user.id, response);
+  response.set("Cache-Control", "no-store").json({
+    user: {
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      business: user.business,
+      preferredLanguage: user.preferredLanguage
+    },
+    needsLanguageSelection: !user.preferredLanguage
+  });
+});
+
+app.get("/api/auth/me", requireAuthentication, (request, response) => {
+  response.json({ user: request.account });
+});
+
+app.patch("/api/auth/language", authLimiter, requireAuthentication, (request, response) => {
+  const data = parseBody(languageSchema, request, response);
+  if (!data) return;
+  database.prepare("UPDATE users SET preferred_language = ? WHERE id = ?").run(data.language, request.account.id);
+  response.json({ preferredLanguage: data.language });
+});
+
+app.post("/api/auth/logout", requireAuthentication, (request, response) => {
+  const tokenHash = crypto.createHash("sha256").update(readSessionToken(request)).digest("hex");
+  database.prepare("DELETE FROM auth_sessions WHERE token_hash = ?").run(tokenHash);
+  clearSessionCookie(response);
+  response.status(204).end();
+});
+
+app.get("/api/finance/assessment", requireAuthentication, (request, response) => {
+  const assessment = database.prepare(`
+    SELECT monthly_income AS monthlyIncome, monthly_expenses AS monthlyExpenses,
+           cash_on_hand AS cashOnHand, debt_outstanding AS debtOutstanding,
+           monthly_debt_payment AS monthlyDebtPayment, other_assets AS otherAssets,
+           other_liabilities AS otherLiabilities, tax_standing AS taxStanding,
+           updated_at AS updatedAt
+    FROM finance_assessments WHERE user_id = ?
+  `).get(request.account.id);
+  response.json({ assessment: assessment || null });
+});
+
+app.put("/api/finance/assessment", requireAuthentication, (request, response) => {
+  const data = parseBody(financeAssessmentSchema, request, response);
+  if (!data) return;
+  database.prepare(`
+    INSERT INTO finance_assessments
+      (user_id, monthly_income, monthly_expenses, cash_on_hand, debt_outstanding,
+       monthly_debt_payment, other_assets, other_liabilities, tax_standing, consent_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(user_id) DO UPDATE SET
+      monthly_income = excluded.monthly_income,
+      monthly_expenses = excluded.monthly_expenses,
+      cash_on_hand = excluded.cash_on_hand,
+      debt_outstanding = excluded.debt_outstanding,
+      monthly_debt_payment = excluded.monthly_debt_payment,
+      other_assets = excluded.other_assets,
+      other_liabilities = excluded.other_liabilities,
+      tax_standing = excluded.tax_standing,
+      consent_at = excluded.consent_at,
+      updated_at = CURRENT_TIMESTAMP
+  `).run(
+    request.account.id, data.monthlyIncome, data.monthlyExpenses, data.cashOnHand,
+    data.debtOutstanding, data.monthlyDebtPayment, data.otherAssets,
+    data.otherLiabilities, data.taxStanding, new Date().toISOString()
+  );
+  response.status(200).set("Cache-Control", "no-store").json({ saved: true });
+});
+
+app.delete("/api/finance/assessment", requireAuthentication, (request, response) => {
+  database.prepare("DELETE FROM finance_assessments WHERE user_id = ?").run(request.account.id);
+  response.status(204).end();
+});
+
+app.post("/api/boss-nana", requireAuthentication, submissionLimiter, async (request, response) => {
+  const data = parseBody(assistantSchema, request, response);
+  if (!data) return;
+  const result = await createAssistantAnswer(data.question, data.history, data.language);
+  response.set("Cache-Control", "no-store").json(result);
+});
+
+/** Public informational assistant route remains available to the existing tools pages. */
 
 /** Return only opted-in listings that passed all reviewer checks. */
 app.get("/api/suppliers", (_request, response) => {
@@ -514,6 +784,24 @@ app.delete("/api/admin/inquiries/:id", requireAdmin, (request, response) => {
 
 /** Serve the HTML application and its assets from the API's same origin. */
 app.use("/server", (_request, response) => response.status(404).end());
+const protectedPagePaths = new Set([
+  "/dashboard", "/dashboard.html",
+  "/finance", "/finance.html",
+  "/marketing", "/marketing.html",
+  "/documents", "/documents.html",
+  "/boss-nana", "/boss-nana.html"
+]);
+app.use((request, response, next) => {
+  if (!protectedPagePaths.has(request.path)) return next();
+  const account = findAuthenticatedAccount(request, response);
+  if (!account) {
+    const returnTo = `${request.path}${request.url.slice(request.path.length)}`;
+    return response.redirect(302, `/login?next=${encodeURIComponent(returnTo)}`);
+  }
+  response.set("Cache-Control", "no-store");
+  request.account = account;
+  next();
+});
 app.use(express.static(projectRoot, { extensions: ["html"], index: "index.html", dotfiles: "ignore" }));
 app.use("/api", (_request, response) => response.status(404).json({ error: "API route not found." }));
 app.use((error, _request, response, _next) => {

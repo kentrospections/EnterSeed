@@ -2,7 +2,91 @@
 
 Enterseed is a multi-page MSME support website focused on South Cotabato and nearby SOCCSKSARGEN communities. The site combines a source-aware registration assistant, local-only document drafts, a reviewed supplier directory, a server-backed readiness assessment, and a human support route.
 
+This project also includes a Boss Narra-oriented product concept for a more complete MSME platform: a purple-and-orange web/mobile experience with language-aware onboarding, grounded AI assistance, finance and marketing modules, and filing support workflows.
+
 This is a small Node/Express deployment, not a static-only site. The server stores submissions in SQLite and serves the HTML pages and API from one origin. Payment processing, government filing, supplier identity checks, and professional legal or financial advice are not provided.
+
+## Boss Narra platform blueprint
+
+### Recommended stack
+
+- Web: Next.js + TypeScript + Tailwind CSS
+- Mobile: React Native + Expo
+- Backend: Node.js + NestJS/Fastify
+- AI grounding: Python FastAPI + LLM gateway + policy checks
+- Data: PostgreSQL + Prisma + Redis
+- Auth: Supabase Auth or Auth0
+- Document generation: PDF and filing-ready packet automation
+
+### Core modules
+
+1. Authentication and onboarding
+   - Secure login and registration
+   - Password recovery and profile management
+   - Language choice for English, Tagalog, and Hiligaynon
+2. Boss Narra assistant
+   - Business recommendations for finance, marketing, and operations
+   - Strict grounding to DTI, DOST, BIR, and local public resources
+   - Safety policies to prevent legal, tax, and financial hallucinations
+3. Practice sets and e-filing
+   - Filing-ready document generation
+   - Watermarked outputs and readiness tagging
+   - Official portal routing for government workflows
+4. Finance engine
+   - Cash flow and debt analysis
+   - Recommendation modules for tax, debt, cash management, and investment planning
+5. Marketing engine
+   - 4Ps recommendations and pricing analysis
+   - Location and promotion tooling
+
+### State management and component logic
+
+- Use React Query/TanStack Query for server-backed dashboard data and caching.
+- Use Zustand for localized onboarding and assistant state.
+- Keep a typed global model for locale, business-stage assessment, assistant thread, and finance/marketing recommendations.
+- Build reusable cards, forms, and modal components to keep the mobile and web experiences consistent.
+
+### Implementation phases
+
+1. Database schema and consent tables
+2. Design system and token creation
+3. Authentication and onboarding with language preference
+4. Feature module rollout for Boss Narra, finance, and marketing
+5. Validation, e2e tests, and source-grounding checks
+
+### Current authentication scope
+
+- Registration and sign-in use the existing Express API, SQLite user records, Node `scrypt` password hashes, and random server-side sessions.
+- Registered accounts persist in the server's SQLite database; passwords are stored as scrypt hashes, never in IndexedDB or other browser storage.
+- Session IDs are stored as SHA-256 hashes in SQLite and issued in `HttpOnly`, `SameSite=Strict` cookies; production cookies also use `Secure`.
+- First-time sign-in requires a saved language preference (English, Filipino, or Hiligaynon). Hiligaynon is recorded, but parts of the interface still fall back to English.
+- Password recovery, email verification, social sign-in, and profile-management screens are not implemented. Configure and test these flows before production use.
+- This is a prototype authentication baseline, not a substitute for a production security assessment, deployment hardening, or privacy/legal review.
+
+### Core MSME sprint
+
+- Login and registration use a navigation-free public layout; authenticated workspace pages are mounted inside the shared `js/app-shell.js` AppShell.
+- `/dashboard`, `/finance`, `/marketing`, `/documents`, and `/boss-nana` are checked against the server session before static page content is served. Unauthenticated requests redirect to `/login` with a safe return path.
+- Desktop workspace navigation lives in the persistent left sidebar; the top utility bar contains breadcrumbs, language, profile, and logout controls. Mobile uses the shared top bar and fixed five-item bottom navigation.
+- The finance assessment lives at `/finance`, stores each user's explicitly consented monthly income, expenses, cash, debt, debt payment, other assets/liabilities, and self-reported tax standing in `finance_assessments`, and powers an account-specific overview on `/dashboard`.
+- `GET /api/finance/assessment`, `PUT /api/finance/assessment`, and `DELETE /api/finance/assessment` require the existing authenticated session and operate only on that session's account.
+- Dashboard outputs are estimates: monthly P&L, a simple asset/liability/equity snapshot, and operating cash after reported debt payments. They are not audited financial statements or professional advice.
+- `POST /api/boss-nana` is authenticated and returns source links with cautious fallback answers. If Gemini is configured, its prompt explicitly treats links as unverified signposts, not retrieved evidence; verify tax, legal, and government requirements directly with DTI, DOST, or BIR.
+- The floating Boss Narra widget is mounted inside each authenticated workspace and never sends finance form values to chat.
+- English and Filipino compatibility strings and structured `messages` catalogs live in `locales/en.json`, `locales/fil.json`, and `locales/hil.json`. Hiligaynon missing keys fall back to the English catalog, then to the source key. The remaining exact-English legacy strings are temporarily under each catalog's `legacy` map.
+- Finance figures are sensitive. This prototype stores them in local SQLite without encryption at rest; do not use real financial data in production until encrypted storage, retention/deletion policy, backups, and access controls have been reviewed.
+
+### Verify the new flows
+
+1. Start the server with `npm start`; confirm `/login` and `/register` contain no application navigation.
+2. Visit `/dashboard`, `/finance`, `/marketing`, `/documents`, and `/boss-nana` without a session; each should redirect to `/login` without showing workspace navigation or content.
+3. Register an account, select a language when prompted, then visit each workspace route. Confirm the same sidebar and top utility bar remain in place while breadcrumbs and active navigation update.
+4. Visit `/finance` and complete the assessment. Submit again after changing a value; reload to confirm the values and recommendations persist for that account.
+5. Use “Delete my saved assessment” and reload to confirm the assessment was removed. Log in as another account to confirm it cannot see the first account's figures.
+6. Open Boss Narra from the utility bar or floating button. Ask a tax or filing question and check that official source links and the verification disclaimer appear.
+7. Switch to Filipino and Hiligaynon using the language control. Confirm untranslated Hiligaynon keys render their English values and the layout remains usable at mobile widths.
+8. Open `/api/finance/assessment` or `/api/boss-nana` without a session and confirm they return `401`.
+
 
 ## Architecture
 
@@ -15,15 +99,32 @@ enterseed-platform/
 ├── js/
 │   ├── app.js
 │   ├── chatbot.js
+│   ├── auth.js
+│   ├── auth-guard.js
+│   ├── app-shell.js
+│   ├── dashboard.js
+│   ├── assistant-widget.js
+│   ├── finance.js
+│   ├── i18n.js
 │   ├── supplier-hub.js
 │   ├── pricing.js
 │   ├── form-handler.js
 │   └── admin.js
+├── locales/
+│   ├── en.json
+│   ├── fil.json
+│   └── hil.json
 ├── logos/                   # User-provided brand marks
 ├── server/
 │   ├── data/                # Runtime SQLite file; ignored by Git
 │   └── index.js             # Same-origin API, validation, retention, review gates
 ├── index.html
+├── login.html
+├── register.html
+├── dashboard.html
+├── finance.html
+├── marketing.html
+├── documents.html
 ├── efiling.html
 ├── suppliers.html
 ├── pricing.html

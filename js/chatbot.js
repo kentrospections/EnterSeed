@@ -110,8 +110,8 @@ async function answerQuestion(question) {
   const bubble = appendMessage("", "assistant");
   await streamText(bubble, result.answer);
   const modeLabel = language === "fil"
-    ? (result.mode === "gemini" ? "Gemini sa server ng Enterseed" : "Offline na gabay mula sa mga sanggunian")
-    : (result.mode === "gemini" ? "Gemini via Enterseed server" : "Offline source-guided fallback");
+    ? (result.mode === "gemini-unverified" ? "Gemini sa server ng Enterseed; hindi pa beripikado ang mga sanggunian" : "Offline na gabay mula sa mga sanggunian")
+    : (result.mode === "gemini-unverified" ? "Gemini via Enterseed server; source links are unverified" : "Offline source-guided fallback");
   if (aiMode) aiMode.textContent = modeLabel;
   if (aiStatus) aiStatus.textContent = language === "fil"
     ? "Nasa ibaba ang mga link sa opisyal na sanggunian at tala ng pagsusuri. Hindi opisyal na pasya ang mga mungkahi ng AI; makipag-ugnayan sa suporta ng Enterseed kung kailangan mo ng kausap."

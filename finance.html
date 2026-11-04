@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en" class="auth-pending">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4A1D8F">
+  <meta name="description" content="Prepare finance estimates and practice-set summaries for your MSME.">
+  <title>Finance tools | Boss Narra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <script src="js/i18n.js" defer></script>
+  <script src="js/language.js" defer></script>
+  <script src="js/app-shell.js" defer></script>
+  <script src="js/auth-guard.js" defer></script>
+  <script src="js/finance.js" defer></script>
+  <script src="js/assistant-widget.js" defer></script>
+</head>
+<body class="portal-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <main id="main" class="app-content-root">
+    <section class="section-header">
+      <div>
+        <p class="eyebrow">Private finance workspace</p>
+        <h1>Plan with your own numbers</h1>
+      </div>
+    </section>
+
+    <section class="panel-card finance-assessment-card" id="finance-assessment" aria-labelledby="finance-heading">
+      <div class="finance-section-heading">
+        <div>
+          <p class="eyebrow">Boss Narra finance checkup</p>
+          <h2 id="finance-heading" data-i18n="finance.title">Your finance checkup</h2>
+          <p data-i18n="finance.intro">Enter monthly business totals and current balances. Boss Narra will prepare estimates from your inputs; this is not tax, lending, or investment advice.</p>
+        </div>
+        <span class="finance-section-icon" aria-hidden="true">₱</span>
+      </div>
+      <form id="finance-form" class="finance-form" novalidate>
+        <div class="finance-input-grid">
+          <div class="finance-field">
+            <label for="finance-income" data-i18n="finance.income">Monthly business income</label>
+            <div class="currency-input"><span aria-hidden="true">₱</span><input id="finance-income" name="monthlyIncome" type="number" min="0" max="1000000000" step="1" inputmode="numeric" required></div>
+          </div>
+          <div class="finance-field">
+            <label for="finance-expenses" data-i18n="finance.expenses">Monthly operating expenses</label>
+            <div class="currency-input"><span aria-hidden="true">₱</span><input id="finance-expenses" name="monthlyExpenses" type="number" min="0" max="1000000000" step="1" inputmode="numeric" required></div>
+          </div>
+          <div class="finance-field">
+            <label for="finance-cash" data-i18n="finance.cash">Cash and bank balance</label>
+            <div class="currency-input"><span aria-hidden="true">₱</span><input id="finance-cash" name="cashOnHand" type="number" min="0" max="1000000000" step="1" inputmode="numeric" required></div>
+          </div>
+          <div class="finance-field">
+            <label for="finance-debt" data-i18n="finance.debt">Outstanding business debt</label>
+            <div class="currency-input"><span aria-hidden="true">₱</span><input id="finance-debt" name="debtOutstanding" type="number" min="0" max="1000000000" step="1" inputmode="numeric" required></div>
+          </div>
+          <div class="finance-field">
+            <label for="finance-debt-payment" data-i18n="finance.debtPayment">Monthly debt payments</label>
+            <div class="currency-input"><span aria-hidden="true">₱</span><input id="finance-debt-payment" name="monthlyDebtPayment" type="number" min="0" max="1000000000" step="1" inputmode="numeric" required></div>
+          </div>
+          <div class="finance-field">
+            <label for="finance-other-assets" data-i18n="finance.otherAssets">Other business assets</label>
+            <div class="currency-input"><span aria-hidden="true">₱</span><input id="finance-other-assets" name="otherAssets" type="number" min="0" max="1000000000" step="1" inputmode="numeric" required></div>
+          </div>
+          <div class="finance-field">
+            <label for="finance-other-liabilities" data-i18n="finance.otherLiabilities">Other liabilities (excluding debt)</label>
+            <div class="currency-input"><span aria-hidden="true">₱</span><input id="finance-other-liabilities" name="otherLiabilities" type="number" min="0" max="1000000000" step="1" inputmode="numeric" required></div>
+          </div>
+          <div class="finance-field">
+            <label for="finance-tax-standing" data-i18n="finance.taxStanding">Tax filing standing</label>
+            <select id="finance-tax-standing" name="taxStanding" required>
+              <option value="current" data-i18n="finance.current">I believe filings are current</option>
+              <option value="needs-filing" data-i18n="finance.needsFiling">A filing is coming due</option>
+              <option value="behind" data-i18n="finance.behind">I may have missed a filing</option>
+              <option value="not-registered" data-i18n="finance.notRegistered">I am not registered with BIR yet</option>
+            </select>
+          </div>
+        </div>
+        <label class="finance-consent">
+          <input id="finance-consent" name="consent" type="checkbox" required>
+          <span data-i18n="finance.consent">I agree to store these financial figures in my Enterseed account so I can return to this assessment. I can delete them later.</span>
+        </label>
+        <p class="finance-privacy-note" data-i18n="finance.accountPrivacy">Financial inputs are private to your account and used only to show this planning estimate. This prototype does not encrypt SQLite data at rest.</p>
+        <div class="finance-form-actions">
+          <button class="button button-dark" id="finance-save" type="submit" data-i18n="finance.save">Save assessment and see recommendations</button>
+          <button class="button button-outline" id="finance-delete" type="button" data-i18n="finance.delete" hidden>Delete my saved assessment</button>
+        </div>
+        <p id="finance-status" class="finance-status" role="status" aria-live="polite" data-no-translate="true"></p>
+      </form>
+    </section>
+
+    <section class="panel-card finance-report-card" id="finance-report" aria-labelledby="finance-report-heading" hidden>
+      <h2 id="finance-report-heading" data-i18n="finance.reportTitle">Assessment and practice-set summary</h2>
+      <p class="finance-disclaimer" data-i18n="finance.estimateDisclaimer">These are user-input-based planning estimates, not audited statements, professional advice, or a government assessment.</p>
+      <div class="finance-report-grid" id="finance-report-values" data-no-translate="true"></div>
+      <div class="finance-recommendation-grid" id="finance-recommendations" data-no-translate="true"></div>
+      <div class="finance-output-summary" id="finance-output-summary" data-no-translate="true"></div>
+      <p class="finance-disclaimer" data-i18n="finance.taxDisclaimer">Tax standing is self-reported. Verify forms and deadlines directly with BIR or a qualified tax professional.</p>
+      <a class="finance-official-link" href="https://www.bir.gov.ph/" target="_blank" rel="noopener noreferrer">Verify tax forms and deadlines with the official BIR website ↗</a>
+    </section>
+    <section class="callout-banner">
+      <div>
+        <strong>These are planning estimates, not professional advice.</strong>
+        <p>Enterseed does not file taxes or certify statements. Confirm tax questions with BIR or a qualified tax professional.</p>
+      </div>
+      <button class="button button-dark" type="button" data-open-boss-nana>Ask Boss Narra</button>
+    </section>
+  </main>
+</body>
+</html>

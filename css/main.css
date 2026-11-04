@@ -1,13 +1,17 @@
 /* Global design tokens and page-wide defaults. */
 :root {
-  --green: #174D3A;
-  --lime: #C7F36B;
-  --cream: #F7F5EC;
-  --slate: #26382E;
+  --green: #4A1D8F;
+  --lime: #FFD166;
+  --cream: #FFF7F1;
+  --slate: #2B1C33;
   --white: #FFFFFF;
-  --muted: #65736A;
-  --line: #DDE2D7;
-  --soft-green: #E9EFE4;
+  --muted: #6F5B77;
+  --line: #E9D9EF;
+  --soft-green: #F7E8D7;
+  --orange: #FF8A3D;
+  --orange-deep: #F26430;
+  --purple-deep: #2C154F;
+  --brand-warm: #F5A623;
   --font-body: "DM Sans", sans-serif;
   --font-display: "Google Sans", "DM Sans", sans-serif;
   --container: 1160px;
