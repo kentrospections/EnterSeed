@@ -756,10 +756,10 @@
 
 /* Reusable authenticated desktop AppShell. */
 .app-shell { display: grid; min-height: 100dvh; grid-template-columns: 252px minmax(0, 1fr); background: #faf8fc; }
-.app-sidebar { position: sticky; top: 0; display: flex; height: 100dvh; flex-direction: column; padding: 28px 18px; background: linear-gradient(180deg, #32115f, #24113c); color: #fff; }
+.app-sidebar { position: sticky; top: 0; align-self: start; display: flex; height: 100dvh; flex-direction: column; justify-content: flex-start; padding: 20px 18px; background: linear-gradient(180deg, #32115f, #24113c); color: #fff; }
 .app-brand { display: inline-flex; width: fit-content; align-items: center; gap: 10px; color: #fff; font-family: var(--font-display); font-size: 21px; font-weight: 800; text-decoration: none; }
 .app-brand img { width: 34px; height: 34px; object-fit: contain; }
-.app-sidebar-nav { display: grid; gap: 8px; margin-top: 40px; }
+.app-sidebar-nav { display: grid; gap: 8px; margin-top: 16px; }
 .app-nav-link, .app-bottom-link { display: flex; min-height: 48px; align-items: center; gap: 12px; border: 1px solid transparent; border-radius: 12px; padding: 0 12px; color: #f0e9fa; font-size: 14px; font-weight: 650; text-decoration: none; transition: background .18s ease, color .18s ease; }
 .app-nav-link:hover { background: rgb(255 255 255 / 10%); }
 .app-nav-link[aria-current="page"] { border-color: rgb(255 255 255 / 20%); background: linear-gradient(100deg, rgb(255 255 255 / 15%), rgb(255 138 61 / 16%)); color: #fff; }
