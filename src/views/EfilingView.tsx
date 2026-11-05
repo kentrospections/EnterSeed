@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { apiFetch } from '../services/apiClient';
 import {
   FileCheck2,
   Trash2,
@@ -32,7 +33,7 @@ export const EfilingView: React.FC = () => {
     setSubmitting(true);
     setStatusMessage(null);
     try {
-      const res = await fetch('/api/readiness', {
+      const res = await apiFetch('/api/readiness', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ stage, needs, location, consent: true })
@@ -52,7 +53,7 @@ export const EfilingView: React.FC = () => {
   const handleDelete = async () => {
     if (!deleteToken) return;
     try {
-      const res = await fetch(`/api/readiness/${deleteToken}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/readiness/${deleteToken}`, { method: 'DELETE' });
       if (res.ok) {
         setDeleteToken(null);
         sessionStorage.removeItem('enterseed_readiness_token');

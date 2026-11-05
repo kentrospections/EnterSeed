@@ -108,7 +108,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             className="flex items-center gap-3 text-left group"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4A1D8F] to-[#FF8A3D] p-2 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <img src="/logos/Icon White.png" alt="Enterseed Icon" className="w-6 h-6 object-contain" />
+              <img src="./logos/Icon White.png" alt="Enterseed Icon" className="w-6 h-6 object-contain" />
             </div>
             <div>
               <span className="font-extrabold text-xl tracking-tight text-white block">Enterseed</span>
@@ -207,7 +207,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               onClick={() => setActivePage('dashboard')}
               className="md:hidden flex items-center gap-2"
             >
-              <img src="/logos/Icon.png" alt="Enterseed" className="w-7 h-7 object-contain" />
+              <img src="./logos/Icon.png" alt="Enterseed" className="w-7 h-7 object-contain" />
               <span className="font-extrabold text-lg text-[#4A1D8F]">Enterseed</span>
             </button>
 

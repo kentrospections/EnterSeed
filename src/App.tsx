@@ -69,7 +69,7 @@ const MainRouter: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#FFF7F1] flex flex-col items-center justify-center p-4">
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#4A1D8F] to-[#FF8A3D] p-3 shadow-lg flex items-center justify-center animate-pulse mb-4">
-          <img src="/logos/Icon White.png" alt="Enterseed" className="w-8 h-8 object-contain" />
+          <img src="./logos/Icon White.png" alt="Enterseed" className="w-8 h-8 object-contain" />
         </div>
         <p className="text-xs font-bold text-[#4A1D8F] tracking-wider uppercase">Loading Enterseed…</p>
       </div>
@@ -92,7 +92,7 @@ const MainRouter: React.FC = () => {
             className="flex items-center gap-2.5"
           >
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#4A1D8F] to-[#FF8A3D] p-1.5 flex items-center justify-center shadow-xs">
-              <img src="/logos/Icon White.png" alt="Enterseed" className="w-5 h-5 object-contain" />
+              <img src="./logos/Icon White.png" alt="Enterseed" className="w-5 h-5 object-contain" />
             </div>
             <span className="font-extrabold text-lg text-[#4A1D8F]">Enterseed</span>
           </button>

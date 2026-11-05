@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/apiClient';
 import { ActivePage } from '../components/AppShell';
 import {
   Coins,
@@ -39,10 +40,7 @@ export const DashboardView: React.FC<{ setActivePage: (page: ActivePage) => void
       try {
         const headers: Record<string, string> = { Accept: 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        const res = await fetch('/api/finance/assessment', {
-          headers,
-          credentials: 'same-origin'
-        });
+        const res = await apiFetch('/api/finance/assessment', { headers });
         if (res.ok) {
           const data = await res.json();
           setAssessment(data.assessment || null);

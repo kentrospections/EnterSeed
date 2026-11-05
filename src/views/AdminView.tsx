@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../services/apiClient';
 import {
   ShieldCheck,
   Key,
@@ -88,9 +89,9 @@ export const AdminView: React.FC = () => {
       };
 
       const [appsRes, supsRes, inqsRes] = await Promise.all([
-        fetch('/api/admin/supplier-applications', { headers }),
-        fetch('/api/admin/suppliers', { headers }),
-        fetch('/api/admin/inquiries', { headers })
+        apiFetch('/api/admin/supplier-applications', { headers }),
+        apiFetch('/api/admin/suppliers', { headers }),
+        apiFetch('/api/admin/inquiries', { headers })
       ]);
 
       if (appsRes.status === 401 || supsRes.status === 401 || inqsRes.status === 401) {
@@ -139,7 +140,7 @@ export const AdminView: React.FC = () => {
     }
 
     try {
-      const res = await fetch(`/api/admin/supplier-applications/${approvingApp.id}/approve`, {
+      const res = await apiFetch(`/api/admin/supplier-applications/${approvingApp.id}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,7 +177,7 @@ export const AdminView: React.FC = () => {
     }
 
     try {
-      const res = await fetch(`/api/admin/supplier-applications/${rejectingApp.id}/reject`, {
+      const res = await apiFetch(`/api/admin/supplier-applications/${rejectingApp.id}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +202,7 @@ export const AdminView: React.FC = () => {
   const handleWithdrawSupplier = async (id: number) => {
     if (!confirm('Are you sure you want to withdraw this supplier from the public directory?')) return;
     try {
-      const res = await fetch(`/api/admin/suppliers/${id}/withdraw`, {
+      const res = await apiFetch(`/api/admin/suppliers/${id}/withdraw`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}` }
       });
@@ -214,7 +215,7 @@ export const AdminView: React.FC = () => {
   const handleDeleteSupplier = async (id: number) => {
     if (!confirm('Permanently erase this supplier record?')) return;
     try {
-      const res = await fetch(`/api/admin/suppliers/${id}`, {
+      const res = await apiFetch(`/api/admin/suppliers/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${apiKey}` }
       });
@@ -227,7 +228,7 @@ export const AdminView: React.FC = () => {
   const handleDeleteInquiry = async (id: number) => {
     if (!confirm('Delete this inquiry from staff records?')) return;
     try {
-      const res = await fetch(`/api/admin/inquiries/${id}`, {
+      const res = await apiFetch(`/api/admin/inquiries/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${apiKey}` }
       });

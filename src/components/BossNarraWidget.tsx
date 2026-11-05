@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/apiClient';
 import { MessageSquare, X, Send, ExternalLink, Bot, Sparkles } from 'lucide-react';
 
 interface ChatMessage {
@@ -61,10 +62,9 @@ export const BossNarraWidget: React.FC<{ isOpenByDefault?: boolean; onClose?: ()
       };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: 'POST',
         headers,
-        credentials: 'same-origin',
         body: JSON.stringify({ question: query, history, language })
       });
 

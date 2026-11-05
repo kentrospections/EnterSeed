@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/apiClient';
 import {
   Coins,
   CheckCircle,
@@ -54,10 +55,7 @@ export const FinanceView: React.FC = () => {
       try {
         const headers: Record<string, string> = { Accept: 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        const res = await fetch('/api/finance/assessment', {
-          headers,
-          credentials: 'same-origin'
-        });
+        const res = await apiFetch('/api/finance/assessment', { headers });
         if (res.ok) {
           const data = await res.json();
           if (data.assessment) {
@@ -142,10 +140,9 @@ export const FinanceView: React.FC = () => {
       };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/finance/assessment', {
+      const res = await apiFetch('/api/finance/assessment', {
         method: 'PUT',
         headers,
-        credentials: 'same-origin',
         body: JSON.stringify(payload)
       });
 
@@ -171,10 +168,9 @@ export const FinanceView: React.FC = () => {
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/finance/assessment', {
+      const res = await apiFetch('/api/finance/assessment', {
         method: 'DELETE',
-        headers,
-        credentials: 'same-origin'
+        headers
       });
 
       if (res.ok) {
