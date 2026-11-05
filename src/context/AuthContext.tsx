@@ -1,0 +1,195 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLanguage, Language } from './LanguageContext';
+
+export interface User {
+  id?: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  business: string;
+  preferredLanguage?: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  needsLanguageSelection: boolean;
+  setNeedsLanguageSelection: (val: boolean) => void;
+  login: (email: string, password: string, remember?: boolean) => Promise<{ success: boolean; error?: string }>;
+  register: (data: { firstName: string; lastName: string; email: string; password: string; business: string }) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  updateLanguagePreference: (lang: Language) => Promise<void>;
+  setQuickDemoUser: (user: User) => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('enterseed_token') || sessionStorage.getItem('enterseed_token'));
+  const [loading, setLoading] = useState(true);
+  const [needsLanguageSelection, setNeedsLanguageSelection] = useState(false);
+  const { setLanguage } = useLanguage();
+
+  const fetchCurrentUser = async (authToken?: string) => {
+    try {
+      const activeToken = authToken || token;
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (activeToken) {
+        headers['Authorization'] = `Bearer ${activeToken}`;
+      }
+      const res = await fetch('/api/auth/me', {
+        headers,
+        credentials: 'same-origin'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+          if (data.user.preferredLanguage) {
+            setLanguage(data.user.preferredLanguage as Language);
+          } else {
+            setNeedsLanguageSelection(true);
+          }
+        }
+      } else {
+        // If 401, check if we have a default demo session or clear
+        setUser(null);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch authenticated user:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
+
+  const login = async (email: string, password: string, remember = false): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Login failed.' };
+      }
+      setUser(data.user);
+      if (data.sessionToken) {
+        setToken(data.sessionToken);
+        if (remember) {
+          localStorage.setItem('enterseed_token', data.sessionToken);
+        } else {
+          sessionStorage.setItem('enterseed_token', data.sessionToken);
+        }
+      }
+      if (data.needsLanguageSelection) {
+        setNeedsLanguageSelection(true);
+      } else if (data.user.preferredLanguage) {
+        setLanguage(data.user.preferredLanguage as Language);
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Could not connect to server. Please try again.' };
+    }
+  };
+
+  const register = async (data: { firstName: string; lastName: string; email: string; password: string; business: string }): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ ...data, agree: true })
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        return { success: false, error: resData.error || 'Registration failed.' };
+      }
+      setUser(resData.user);
+      if (resData.sessionToken) {
+        setToken(resData.sessionToken);
+        sessionStorage.setItem('enterseed_token', resData.sessionToken);
+      }
+      setNeedsLanguageSelection(true);
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Could not connect to server. Please try again.' };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers,
+        credentials: 'same-origin'
+      });
+    } catch {
+      // ignore
+    } finally {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('enterseed_token');
+      sessionStorage.removeItem('enterseed_token');
+    }
+  };
+
+  const updateLanguagePreference = async (lang: Language) => {
+    setLanguage(lang);
+    setNeedsLanguageSelection(false);
+    if (!user) return;
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/auth/language', {
+        method: 'PATCH',
+        headers,
+        credentials: 'same-origin',
+        body: JSON.stringify({ language: lang })
+      });
+      if (res.ok) {
+        setUser((prev) => prev ? { ...prev, preferredLanguage: lang } : null);
+      }
+    } catch {
+      // local preference updated anyway
+    }
+  };
+
+  const setQuickDemoUser = (demoUser: User) => {
+    setUser(demoUser);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        needsLanguageSelection,
+        setNeedsLanguageSelection,
+        login,
+        register,
+        logout,
+        updateLanguagePreference,
+        setQuickDemoUser
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
+};
