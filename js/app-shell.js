@@ -140,11 +140,6 @@ function mountAppShell(user) {
   const email = document.createElement("span");
   email.className = "app-profile-email";
   email.textContent = user.email || "";
-  const publicSite = document.createElement("a");
-  publicSite.className = "app-public-site";
-  publicSite.href = "index.html";
-  publicSite.dataset.i18n = "appShell.publicSite";
-  publicSite.textContent = window.EnterseedI18n.t("appShell.publicSite");
   const logoutStatus = document.createElement("span");
   logoutStatus.className = "app-logout-status";
   logoutStatus.setAttribute("role", "status");
@@ -167,7 +162,7 @@ function mountAppShell(user) {
       logoutStatus.textContent = window.EnterseedI18n.t("appShell.logoutError");
     }
   });
-  profileMenu.append(email, publicSite, logoutStatus, logout);
+  profileMenu.append(email, logoutStatus, logout);
   profile.append(summary, profileMenu);
 
   const mobileChat = document.createElement("button");

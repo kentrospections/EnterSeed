@@ -14,7 +14,7 @@ The static website can be published at `https://tdalog-cell.github.io/EnterSeed/
 2. In Render, create a Blueprint from this repository using `render.yaml`. Review the current price before creating the paid web service and persistent disk. Keep the generated `ADMIN_API_KEY` private; add optional AI and email credentials in Render's environment settings.
 3. Wait for the Render service to become healthy at `/api/health`, then save its HTTPS origin in the GitHub variable.
 4. In the repository's **Settings → Pages**, choose **GitHub Actions** as the deployment source. Push or merge the workflow to `main`, or run **Deploy GitHub Pages** manually after the variable is set.
-5. Open `https://tdalog-cell.github.io/EnterSeed/`. The public welcome page is `index.html`; protected tools redirect unauthenticated visitors to the sign-in page. The integrated supplier directory and application are in Marketing.
+5. Open `https://tdalog-cell.github.io/EnterSeed/`. The root redirects directly to sign-in; after authentication, use the Dashboard, Finance, Marketing, and Documents workspace. The integrated supplier directory and application are in Marketing.
 
 The Pages build fails intentionally if `ENTERSEED_API_URL` is missing or is not an HTTPS origin. The Render API allows browser requests only from the configured Pages origin. Cross-origin sign-in returns an opaque session token to that origin; the browser stores it in session storage by default, or local storage when “Keep me signed in” is selected. The server stores only a hash of the token. Never publish API or admin secrets in GitHub variables used by the static build.
 
@@ -95,7 +95,7 @@ To check the static artifact locally, set `ENTERSEED_API_URL` to a valid HTTPS b
 1. Start the server with `npm start`; confirm `/login` and `/register` contain no application navigation.
 2. Visit `/dashboard`, `/finance`, `/marketing`, `/documents`, and `/boss-nana` without a session; each should redirect to `/login` without showing workspace navigation or content.
 3. Register an account, select a language when prompted, then visit each workspace route. Confirm the same sidebar and top utility bar remain in place while breadcrumbs and active navigation update.
-4. Confirm sign-in without a requested page opens `/dashboard`; use the account menu’s “Main website” link to return to `/`. On mobile, verify the floating assistant does not cover the bottom navigation.
+4. Confirm sign-in without a requested page opens `/dashboard`; use the account menu to log out. The site root opens sign-in. On mobile, verify the floating assistant does not cover the bottom navigation.
 5. Visit `/finance` and complete the assessment. Submit again after changing a value; reload to confirm the values and recommendations persist for that account.
 6. Use “Delete my saved assessment” and reload to confirm the assessment was removed. Log in as another account to confirm it cannot see the first account's figures.
 7. Open Boss Narra from the utility bar or floating button. Ask a tax or filing question and check that official source links and the verification disclaimer appear.

@@ -764,9 +764,7 @@
 .app-profile-menu { position: absolute; z-index: 45; top: calc(100% + 10px); right: 0; display: grid; min-width: 210px; gap: 12px; border: 1px solid #eee8f3; border-radius: 14px; padding: 14px; background: #fff; box-shadow: 0 16px 40px rgb(38 18 58 / 14%); }
 .app-profile-email { overflow: hidden; color: #766b7e; font-size: 12px; text-overflow: ellipsis; }
 .app-logout-status { color: #a12828; font-size: 12px; }
-.app-logout, .app-public-site { min-height: 40px; border: 1px solid #e8ddec; border-radius: 10px; background: #fff; color: var(--purple-deep); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.app-public-site { display: flex; align-items: center; justify-content: center; text-decoration: none; }
-.app-public-site:hover { background: #fbf7ff; }
+.app-logout { min-height: 40px; border: 1px solid #e8ddec; border-radius: 10px; background: #fff; color: var(--purple-deep); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .app-content-root { width: min(100%, 1480px); min-width: 0; margin-inline: auto; padding: 32px clamp(20px, 4vw, 48px) 60px; }
 .app-content-root .supplier-section > .container, .app-content-root .contact-section > .container { width: 100%; }
 .app-content-root .supplier-section, .app-content-root .contact-section { padding-block: 20px; background: transparent; }

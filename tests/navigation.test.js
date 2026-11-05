@@ -70,8 +70,18 @@ afterAll(async () => {
 });
 
 describe("website navigation and authentication", () => {
-  it("serves the public entry points", async () => {
-    for (const route of ["/", "/login", "/register", "/onboarding", "/about", "/efiling", "/pricing"]) {
+  it("opens the standalone sign-in flow instead of the former main website", async () => {
+    const root = await fetch(`${baseUrl}/`);
+    expect(root.status).toBe(200);
+    const rootHtml = await root.text();
+    expect(rootHtml).toContain('url=login.html');
+    expect(rootHtml).not.toContain("Choose your path");
+
+    const shell = await readFile(path.join(projectDirectory, "js", "app-shell.js"), "utf8");
+    expect(shell).not.toContain("publicSite");
+    expect(shell).not.toContain("Main website");
+
+    for (const route of ["/login", "/register", "/onboarding", "/about", "/efiling", "/pricing"]) {
       const response = await fetch(`${baseUrl}${route}`, { redirect: "manual" });
       expect(response.status, route).toBe(200);
     }
