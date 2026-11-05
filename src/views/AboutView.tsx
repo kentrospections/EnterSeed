@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/apiClient';
 import {
   Info,
   ShieldCheck,
@@ -36,7 +37,7 @@ export const AboutView: React.FC = () => {
     setSubmitting(true);
     setStatusMessage(null);
     try {
-      const res = await fetch('/api/inquiries', {
+      const res = await apiFetch('/api/inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(form)

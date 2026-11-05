@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../services/apiClient';
 import { SupplierMap, SupplierLocation } from '../components/SupplierMap';
 import {
   TrendingUp,
@@ -76,7 +77,7 @@ export const MarketingView: React.FC = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await fetch('/api/suppliers', {
+      const res = await apiFetch('/api/suppliers', {
         headers: { Accept: 'application/json' }
       });
       if (res.ok) {
@@ -119,7 +120,7 @@ export const MarketingView: React.FC = () => {
     setApplySubmitting(true);
     setApplyStatus(null);
     try {
-      const res = await fetch('/api/supplier-applications', {
+      const res = await apiFetch('/api/supplier-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(applyForm)
@@ -144,7 +145,7 @@ export const MarketingView: React.FC = () => {
     setIntroSubmitting(true);
     setIntroStatus(null);
     try {
-      const res = await fetch(`/api/suppliers/${introSupplier.id}/contact`, {
+      const res = await apiFetch(`/api/suppliers/${introSupplier.id}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(introForm)

@@ -98,7 +98,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode, setActivePage }
       <header className="w-full bg-white/90 backdrop-blur-md border-b border-[#E9D9EF] px-6 py-4 flex items-center justify-between z-20">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4A1D8F] to-[#FF8A3D] p-1.5 flex items-center justify-center shadow-md">
-            <img src="/logos/Icon White.png" alt="Enterseed" className="w-6 h-6 object-contain" />
+            <img src="./logos/Icon White.png" alt="Enterseed" className="w-6 h-6 object-contain" />
           </div>
           <div>
             <span className="font-extrabold text-xl tracking-tight text-[#4A1D8F] block leading-tight">Enterseed</span>

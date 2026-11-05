@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLanguage, Language } from './LanguageContext';
+import { apiFetch } from '../services/apiClient';
 
 export interface User {
   id?: number;
@@ -39,10 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (activeToken) {
         headers['Authorization'] = `Bearer ${activeToken}`;
       }
-      const res = await fetch('/api/auth/me', {
-        headers,
-        credentials: 'same-origin'
-      });
+      const res = await apiFetch('/api/auth/me', { headers });
       if (res.ok) {
         const data = await res.json();
         if (data.user) {
@@ -54,7 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } else {
-        // If 401, check if we have a default demo session or clear
         setUser(null);
       }
     } catch (err) {
@@ -70,10 +67,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string, remember = false): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        credentials: 'same-origin',
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
@@ -102,10 +98,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (data: { firstName: string; lastName: string; email: string; password: string; business: string }): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        credentials: 'same-origin',
         body: JSON.stringify({ ...data, agree: true })
       });
       const resData = await res.json();
@@ -128,11 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers,
-        credentials: 'same-origin'
-      });
+      await apiFetch('/api/auth/logout', { method: 'POST', headers });
     } catch {
       // ignore
     } finally {
@@ -150,10 +141,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch('/api/auth/language', {
+      const res = await apiFetch('/api/auth/language', {
         method: 'PATCH',
         headers,
-        credentials: 'same-origin',
         body: JSON.stringify({ language: lang })
       });
       if (res.ok) {
@@ -166,6 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setQuickDemoUser = (demoUser: User) => {
     setUser(demoUser);
+    localStorage.setItem('enterseed_current_user', JSON.stringify(demoUser));
   };
 
   return (
