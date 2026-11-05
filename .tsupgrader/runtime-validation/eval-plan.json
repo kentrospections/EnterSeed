@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-11-05T02:25:00Z",
+  "generatedOnPlatform": "win32",
+  "projectType": "server",
+  "devServer": {
+    "command": "npm",
+    "args": [
+      "start"
+    ],
+    "env": {
+      "HOST": "127.0.0.1",
+      "PORT": "5217",
+      "DATABASE_PATH": ".tsupgrader/runtime-validation/runtime-validation.sqlite",
+      "GEMINI_API_KEY": "",
+      "ADMIN_API_KEY": ""
+    },
+    "url": "http://127.0.0.1:5217/api/health",
+    "readyTimeoutSeconds": 60
+  },
+  "setup": [
+    {
+      "command": "npm",
+      "args": [
+        "ci"
+      ],
+      "timeoutSeconds": 600
+    }
+  ],
+  "assertions": [
+    {
+      "name": "server-health-200",
+      "kind": "process",
+      "command": "node",
+      "args": [
+        "--input-type=module",
+        "-e",
+        "const response = await fetch('http://127.0.0.1:5217/api/health'); if (response.status !== 200) { console.error(response.status); process.exit(1); }"
+      ],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "public-homepage-200",
+      "kind": "process",
+      "command": "node",
+      "args": [
+        "--input-type=module",
+        "-e",
+        "const response = await fetch('http://127.0.0.1:5217/'); if (response.status !== 200) { console.error(response.status); process.exit(1); }"
+      ],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "login-page-200",
+      "kind": "process",
+      "command": "node",
+      "args": [
+        "--input-type=module",
+        "-e",
+        "const response = await fetch('http://127.0.0.1:5217/login'); if (response.status !== 200) { console.error(response.status); process.exit(1); }"
+      ],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "protected-dashboard-redirect",
+      "kind": "process",
+      "command": "node",
+      "args": [
+        "--input-type=module",
+        "-e",
+        "const response = await fetch('http://127.0.0.1:5217/dashboard', { redirect: 'manual' }); if (response.status !== 302 || response.headers.get('location') !== '/login?next=%2Fdashboard') { console.error(response.status, response.headers.get('location')); process.exit(1); }"
+      ],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "protected-assistant-redirect",
+      "kind": "process",
+      "command": "node",
+      "args": [
+        "--input-type=module",
+        "-e",
+        "const response = await fetch('http://127.0.0.1:5217/boss-nana', { redirect: 'manual' }); if (response.status !== 302 || response.headers.get('location') !== '/login?next=%2Fboss-nana') { console.error(response.status, response.headers.get('location')); process.exit(1); }"
+      ],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "tests-pass",
+      "kind": "process",
+      "command": "npm",
+      "args": [
+        "test"
+      ],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 180
+    }
+  ]
+}

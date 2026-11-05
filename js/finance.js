@@ -44,7 +44,7 @@ function readFormValues() {
 }
 
 async function requestFinance(url, options = {}) {
-  const response = await fetch(url, {
+  const response = await window.EnterseedApi.request(url, {
     credentials: "same-origin",
     headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
     ...options

@@ -49,7 +49,7 @@ continueLanguageButton?.addEventListener("click", async () => {
   try {
     await window.EnterseedI18n.setLocale(selectedLanguage);
     if (window.EnterseedAccount) {
-      const response = await fetch("/api/auth/language", {
+      const response = await window.EnterseedApi.request("/api/auth/language", {
         method: "PATCH",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json", Accept: "application/json" },

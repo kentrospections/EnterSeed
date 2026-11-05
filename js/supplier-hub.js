@@ -117,7 +117,7 @@ function renderSuppliers() {
 async function loadSuppliers() {
   if (!supplierGrid) return;
   try {
-    const response = await fetch("/api/suppliers", { headers: { Accept: "application/json" } });
+    const response = await window.EnterseedApi.request("/api/suppliers", { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error("Supplier directory could not be reached.");
     const payload = await response.json();
     suppliers = Array.isArray(payload.suppliers) ? payload.suppliers.filter((supplier) => supplier.verifiedAt) : [];
@@ -140,7 +140,7 @@ async function locateSupplier(supplier) {
   try {
     await waitForGeocodingSlot();
     const params = new URLSearchParams({ q: supplier.location });
-    const response = await fetch(`/api/places/search?${params}`, { headers: { Accept: "application/json" } });
+    const response = await window.EnterseedApi.request(`/api/places/search?${params}`, { headers: { Accept: "application/json" } });
     if (!response.ok) throw new Error("Map lookup failed. The supplier's municipality remains listed on its card.");
     const payload = await response.json();
     const place = payload.place;
@@ -185,7 +185,7 @@ document.querySelector("#map-search-form")?.addEventListener("submit", async (ev
   try {
     await waitForGeocodingSlot();
     const params = new URLSearchParams({ q: place });
-    const response = await fetch(`/api/places/search?${params}`, { headers: { Accept: "application/json" } });
+    const response = await window.EnterseedApi.request(`/api/places/search?${params}`, { headers: { Accept: "application/json" } });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "OpenStreetMap place search is unavailable.");
     supplierMap.setView([payload.place.latitude, payload.place.longitude], 12, { animate: true });
@@ -221,7 +221,7 @@ applicationForm?.addEventListener("submit", async (event) => {
   formData.publishContact = publishContactToggle.checked;
   formData.consent = applicationForm.elements.consent.checked;
   try {
-    const response = await fetch("/api/supplier-applications", {
+    const response = await window.EnterseedApi.request("/api/supplier-applications", {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(formData)
     });
     const result = await response.json();

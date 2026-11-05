@@ -4,7 +4,7 @@ const dashboardSummary = document.querySelector("#dashboard-finance-summary");
 async function loadDashboardSummary() {
   if (!dashboardSummary) return;
   try {
-    const response = await fetch("/api/finance/assessment", {
+    const response = await window.EnterseedApi.request("/api/finance/assessment", {
       credentials: "same-origin",
       headers: { Accept: "application/json" },
       cache: "no-store"

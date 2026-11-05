@@ -1,41 +1,41 @@
-(function seedlingWidget() {
+(function publicAssistantWidget() {
 const widgetCopy = {
   en: {
-    open: "Chat with Seedling",
+    open: "Ask Boss Narra",
     close: "Close chat",
-    title: "Seedling",
+    title: "Boss Narra",
     subtitle: "Your business growth companion",
-    greeting: "Hi! I’m Seedling. What can I help you with today?",
+    greeting: "Hi! I’m Boss Narra. What can I help you with today?",
     disclaimer: "AI can make mistakes. Confirm important details with official sources.",
     placeholder: "Ask a business question…",
     send: "Send message",
-    waiting: "Seedling is thinking…",
+    waiting: "Boss Narra is thinking…",
     error: "I couldn’t reach the assistant. Please try again in a moment.",
   },
   fil: {
-    open: "Makipag-chat kay Seedling",
+    open: "Magtanong kay Boss Narra",
     close: "Isara ang chat",
-    title: "Seedling",
+    title: "Boss Narra",
     subtitle: "Kasama mo sa pagpapalago ng negosyo",
-    greeting: "Kumusta! Ako si Seedling. Paano kita matutulungan ngayon?",
+    greeting: "Kumusta! Ako si Boss Narra. Paano kita matutulungan ngayon?",
     disclaimer: "Maaaring magkamali ang AI. Tiyakin ang mahahalagang detalye sa mga opisyal na sanggunian.",
     placeholder: "Magtanong tungkol sa negosyo…",
     send: "Ipadala ang mensahe",
-    waiting: "Nag-iisip si Seedling…",
+    waiting: "Nag-iisip si Boss Narra…",
     error: "Hindi ko maabot ang assistant. Pakisubukang muli maya-maya.",
   }
 };
 
 const conversation = [];
 const widget = document.createElement("section");
-widget.className = "seedling-widget";
-widget.setAttribute("aria-label", "Seedling AI assistant");
+widget.className = "public-assistant-widget";
+widget.setAttribute("aria-label", "Boss Narra AI assistant");
 
 const launcher = document.createElement("button");
-launcher.className = "seedling-launcher";
+launcher.className = "public-assistant-launcher";
 launcher.type = "button";
 launcher.setAttribute("aria-expanded", "false");
-launcher.setAttribute("aria-controls", "seedling-panel");
+launcher.setAttribute("aria-controls", "public-assistant-panel");
 launcher.setAttribute("aria-label", widgetCopy.en.open);
 const launcherAvatar = document.createElement("img");
 launcherAvatar.src = "logos/Icon.png";
@@ -44,24 +44,24 @@ launcherAvatar.setAttribute("aria-hidden", "true");
 launcher.append(launcherAvatar);
 
 const panel = document.createElement("div");
-panel.className = "seedling-panel";
-panel.id = "seedling-panel";
+panel.className = "public-assistant-panel";
+panel.id = "public-assistant-panel";
 panel.hidden = true;
 panel.setAttribute("role", "dialog");
-panel.setAttribute("aria-labelledby", "seedling-title");
+panel.setAttribute("aria-labelledby", "public-assistant-title");
 
 const header = document.createElement("header");
-header.className = "seedling-header";
+header.className = "public-assistant-header";
 const identity = document.createElement("div");
-identity.className = "seedling-identity";
+identity.className = "public-assistant-identity";
 const headerAvatar = document.createElement("img");
-headerAvatar.className = "seedling-avatar";
+headerAvatar.className = "public-assistant-avatar";
 headerAvatar.src = "logos/Icon.png";
 headerAvatar.alt = "";
 headerAvatar.setAttribute("aria-hidden", "true");
 const identityText = document.createElement("div");
 const title = document.createElement("strong");
-title.id = "seedling-title";
+title.id = "public-assistant-title";
 title.textContent = widgetCopy.en.title;
 const subtitle = document.createElement("span");
 subtitle.textContent = widgetCopy.en.subtitle;
@@ -69,23 +69,23 @@ identityText.append(title, subtitle);
 identity.append(headerAvatar, identityText);
 
 const closeButton = document.createElement("button");
-closeButton.className = "seedling-close";
+closeButton.className = "public-assistant-close";
 closeButton.type = "button";
 closeButton.setAttribute("aria-label", widgetCopy.en.close);
 closeButton.textContent = "×";
 header.append(identity, closeButton);
 
 const messages = document.createElement("div");
-messages.className = "seedling-messages";
+messages.className = "public-assistant-messages";
 messages.setAttribute("aria-live", "polite");
 messages.setAttribute("aria-relevant", "additions text");
 
 const disclaimer = document.createElement("p");
-disclaimer.className = "seedling-disclaimer";
+disclaimer.className = "public-assistant-disclaimer";
 disclaimer.textContent = widgetCopy.en.disclaimer;
 
 const form = document.createElement("form");
-form.className = "seedling-form";
+form.className = "public-assistant-form";
 const input = document.createElement("input");
 input.type = "text";
 input.name = "question";
@@ -96,7 +96,7 @@ input.setAttribute("aria-label", widgetCopy.en.placeholder);
 input.placeholder = widgetCopy.en.placeholder;
 const sendButton = document.createElement("button");
 sendButton.type = "submit";
-sendButton.className = "seedling-send";
+sendButton.className = "public-assistant-send";
 sendButton.setAttribute("aria-label", widgetCopy.en.send);
 sendButton.textContent = "↑";
 form.append(input, sendButton);
@@ -111,7 +111,7 @@ function currentCopy() {
 
 function appendMessage(text, sender) {
   const message = document.createElement("div");
-  message.className = `seedling-message ${sender === "user" ? "seedling-user" : "seedling-assistant"}`;
+  message.className = `public-assistant-message ${sender === "user" ? "public-assistant-user" : "public-assistant-answer"}`;
   if (sender === "assistant") {
     const avatar = document.createElement("img");
     avatar.src = "logos/Icon.png";
@@ -136,12 +136,12 @@ function syncLanguage() {
   input.placeholder = copy.placeholder;
   input.setAttribute("aria-label", copy.placeholder);
   sendButton.setAttribute("aria-label", copy.send);
-  const greeting = messages.querySelector(".seedling-greeting p");
+  const greeting = messages.querySelector(".public-assistant-greeting p");
   if (greeting) {
     greeting.textContent = copy.greeting;
   } else if (messages.childElementCount === 0) {
     const message = appendMessage(copy.greeting, "assistant");
-    message.classList.add("seedling-greeting");
+    message.classList.add("public-assistant-greeting");
   }
 }
 
@@ -152,7 +152,7 @@ async function submitQuestion(question) {
   input.value = "";
   sendButton.disabled = true;
   const typingMessage = document.createElement("p");
-  typingMessage.className = "seedling-typing";
+  typingMessage.className = "public-assistant-typing";
   typingMessage.setAttribute("role", "status");
   typingMessage.textContent = currentCopy().waiting;
   messages.append(typingMessage);
@@ -161,7 +161,7 @@ async function submitQuestion(question) {
   const language = window.EnterseedLanguage?.current === "fil" ? "fil" : "en";
   const requestQuestion = cleanQuestion;
   try {
-    const response = await fetch("/api/assistant", {
+    const response = await window.EnterseedApi.request("/api/assistant", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
@@ -184,7 +184,7 @@ async function submitQuestion(question) {
     );
     if (conversation.length > 8) conversation.splice(0, conversation.length - 8);
   } catch (error) {
-    console.error("Seedling assistant request failed.", error);
+    console.error("Boss Narra assistant request failed.", error);
     typingMessage.remove();
     appendMessage(currentCopy().error, "assistant");
   } finally {
@@ -202,6 +202,9 @@ function setOpen(isOpen) {
 
 launcher.addEventListener("click", () => setOpen(launcher.getAttribute("aria-expanded") !== "true"));
 closeButton.addEventListener("click", () => setOpen(false));
+document.querySelectorAll("[data-open-assistant]").forEach((button) => {
+  button.addEventListener("click", () => setOpen(true));
+});
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   void submitQuestion(input.value);

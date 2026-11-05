@@ -41,7 +41,6 @@ close.className = "boss-nana-close";
 close.type = "button";
 close.dataset.i18nLabel = "chatbot.close";
 close.textContent = "×";
-close.textContent = "×";
 header.append(identity, close);
 
 const messages = document.createElement("div");
@@ -138,7 +137,7 @@ form.addEventListener("submit", async (event) => {
   send.disabled = true;
   const waiting = appendMessage(window.EnterseedI18n.t("chatbot.waiting"), "assistant");
   try {
-    const response = await fetch("/api/boss-nana", {
+    const response = await window.EnterseedApi.request("/api/boss-nana", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json", Accept: "application/json" },

@@ -1,0 +1,202 @@
+{
+  "planHash": "fd387690bcbb81114376dc4bf37b6d8699316715cbc1808b188720c29356815f",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-05T03:12:19.9063902Z",
+  "retryCount": 1,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 7673,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "server-health-200",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 314
+      },
+      {
+        "name": "public-homepage-200",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 311
+      },
+      {
+        "name": "login-page-200",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 253
+      },
+      {
+        "name": "protected-dashboard-redirect",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 253
+      },
+      {
+        "name": "protected-assistant-redirect",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 244
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E enterseed-platform@1.0.0 test\r\n\u003E vitest run\r\n\r\n\r\n RUN  v5.1.0 C:/Users/User/Documents/MSME_PROJECT\r\n\r\n\r\n Test Files  1 passed (1)\r\n      Tests  5 passed (5)\r\n   Start at  11:12:18\r\n   Duration  1.57s (tests 95%, transform 3%, import 2%, worker 1%)\r\n\r\n",
+        "durationMs": 3179,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 5,
+          "testsPassed": 5,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "ci"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "devServer",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "start"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {
+          "HOST": "127.0.0.1",
+          "PORT": "5217",
+          "DATABASE_PATH": ".tsupgrader/runtime-validation/runtime-validation.sqlite",
+          "GEMINI_API_KEY": "\u003Credacted\u003E",
+          "ADMIN_API_KEY": "\u003Credacted\u003E"
+        },
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "server-health-200",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\node.EXE",
+        "args": [
+          "--input-type=module",
+          "-e",
+          "const response = await fetch(\u0027http://127.0.0.1:5217/api/health\u0027); if (response.status !== 200) { console.error(response.status); process.exit(1); }"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "public-homepage-200",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\node.EXE",
+        "args": [
+          "--input-type=module",
+          "-e",
+          "const response = await fetch(\u0027http://127.0.0.1:5217/\u0027); if (response.status !== 200) { console.error(response.status); process.exit(1); }"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "login-page-200",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\node.EXE",
+        "args": [
+          "--input-type=module",
+          "-e",
+          "const response = await fetch(\u0027http://127.0.0.1:5217/login\u0027); if (response.status !== 200) { console.error(response.status); process.exit(1); }"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "protected-dashboard-redirect",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\node.EXE",
+        "args": [
+          "--input-type=module",
+          "-e",
+          "const response = await fetch(\u0027http://127.0.0.1:5217/dashboard\u0027, { redirect: \u0027manual\u0027 }); if (response.status !== 302 || response.headers.get(\u0027location\u0027) !== \u0027/login?next=%2Fdashboard\u0027) { console.error(response.status, response.headers.get(\u0027location\u0027)); process.exit(1); }"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "protected-assistant-redirect",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\node.EXE",
+        "args": [
+          "--input-type=module",
+          "-e",
+          "const response = await fetch(\u0027http://127.0.0.1:5217/boss-nana\u0027, { redirect: \u0027manual\u0027 }); if (response.status !== 302 || response.headers.get(\u0027location\u0027) !== \u0027/login?next=%2Fboss-nana\u0027) { console.error(response.status, response.headers.get(\u0027location\u0027)); process.exit(1); }"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\User\\Documents\\MSME_PROJECT",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

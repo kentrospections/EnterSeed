@@ -1,4 +1,4 @@
-/** Same-origin API for support inquiries, readiness assessments, and reviewed suppliers. */
+/** API for support inquiries, readiness assessments, and reviewed suppliers. */
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -139,6 +139,20 @@ sessionRetentionTimer.unref();
 const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", process.env.TRUST_PROXY === "true" ? 1 : false);
+const allowedFrontendOrigins = new Set(
+  (process.env.FRONTEND_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean)
+);
+app.use((request, response, next) => {
+  const origin = request.get("origin");
+  if (origin && allowedFrontendOrigins.has(origin)) {
+    response.set("Access-Control-Allow-Origin", origin);
+    response.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    response.set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type");
+    response.vary("Origin");
+    if (request.method === "OPTIONS") return response.status(204).end();
+  }
+  next();
+});
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   strictTransportSecurity: process.env.NODE_ENV === "production" ? undefined : false,
@@ -368,6 +382,8 @@ function verifyPassword(password, storedHash) {
 }
 
 function readSessionToken(request) {
+  const bearer = request.get("authorization")?.match(/^Bearer ([A-Za-z0-9_-]{43})$/);
+  if (bearer) return bearer[1];
   const cookie = request.headers.cookie?.split(";").map((part) => part.trim())
     .find((part) => part.startsWith(`${sessionCookieName}=`));
   return cookie ? cookie.slice(sessionCookieName.length + 1) : "";
@@ -390,6 +406,11 @@ function createSession(userId, response) {
   database.prepare("INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)")
     .run(tokenHash, userId, expiresAt);
   writeSessionCookie(response, token);
+  return token;
+}
+
+function sessionTokenForAllowedFrontend(request, token) {
+  return allowedFrontendOrigins.has(request.get("origin")) ? { sessionToken: token } : {};
 }
 
 function findAuthenticatedAccount(request, response) {
@@ -435,10 +456,11 @@ app.post("/api/auth/register", authLimiter, async (request, response) => {
       VALUES (?, ?, ?, ?, ?)
     `).run(email, passwordHash, data.firstName, data.lastName, data.business);
     const userId = Number(result.lastInsertRowid);
-    createSession(userId, response);
+    const sessionToken = createSession(userId, response);
     response.status(201).set("Cache-Control", "no-store").json({
       user: { email, firstName: data.firstName, lastName: data.lastName, business: data.business, preferredLanguage: "" },
-      needsLanguageSelection: true
+      needsLanguageSelection: true,
+      ...sessionTokenForAllowedFrontend(request, sessionToken)
     });
   } catch (error) {
     if (error.message?.includes("UNIQUE constraint failed: users.email")) {
@@ -465,7 +487,7 @@ app.post("/api/auth/login", authLimiter, async (request, response) => {
     await hashPassword(data.password, Buffer.alloc(16, 1));
   }
   if (!user || !passwordMatches) return response.status(401).json({ error: "Email or password is incorrect." });
-  createSession(user.id, response);
+  const sessionToken = createSession(user.id, response);
   response.set("Cache-Control", "no-store").json({
     user: {
       email: user.email,
@@ -474,7 +496,8 @@ app.post("/api/auth/login", authLimiter, async (request, response) => {
       business: user.business,
       preferredLanguage: user.preferredLanguage
     },
-    needsLanguageSelection: !user.preferredLanguage
+    needsLanguageSelection: !user.preferredLanguage,
+    ...sessionTokenForAllowedFrontend(request, sessionToken)
   });
 });
 

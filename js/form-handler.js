@@ -44,7 +44,7 @@ contactForm?.addEventListener("submit", async (event) => {
     delete formData.companyFax;
   }
   try {
-    const response = await fetch(endpoint, {
+    const response = await window.EnterseedApi.request(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(formData)
     });
     const result = await response.json();
@@ -121,7 +121,7 @@ async function finishAssessment() {
   setFormStatus(assessmentStatus, "Saving your minimal assessment…", "pending");
   let saveMessage = "Your recommendation is ready. No contact details were collected.";
   try {
-    const response = await fetch("/api/readiness", {
+    const response = await window.EnterseedApi.request("/api/readiness", {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data)
     });
     const result = await response.json();
@@ -134,10 +134,13 @@ async function finishAssessment() {
     saveMessage = `${error.message} Your recommendation still works, but the assessment was not saved.`;
     setFormStatus(assessmentStatus, error.message, "error");
   }
-  const target = needs.includes("suppliers") ? "suppliers.html" : "efiling.html";
-  const recommendation = needs.includes("suppliers") ? "Supplier Hub" : "E-Filing & AI";
+  const needsSupplierDirectory = needs.includes("suppliers");
+  const target = needsSupplierDirectory ? "marketing.html#partners" : "efiling.html";
+  const recommendation = needsSupplierDirectory ? "the local partner directory" : "E-Filing & AI";
   document.querySelector("#recommendation-copy").textContent = `Based on your answers, start with ${recommendation}. ${saveMessage}`;
-  document.querySelector("#recommendation-link").href = `${target}?recommendation=${encodeURIComponent(needs.join(","))}&location=${encodeURIComponent(data.location)}`;
+  document.querySelector("#recommendation-link").href = needsSupplierDirectory
+    ? target
+    : `${target}?recommendation=${encodeURIComponent(needs.join(","))}&location=${encodeURIComponent(data.location)}`;
   wizardSteps[wizardStep - 1].hidden = true;
   wizardActions.hidden = true;
   wizardSuccess.hidden = false;
@@ -188,7 +191,7 @@ deleteAssessmentButton?.addEventListener("click", async () => {
   }
   deleteAssessmentButton.disabled = true;
   try {
-    const response = await fetch(`/api/readiness/${encodeURIComponent(token)}`, { method: "DELETE" });
+    const response = await window.EnterseedApi.request(`/api/readiness/${encodeURIComponent(token)}`, { method: "DELETE" });
     if (!response.ok && response.status !== 404) throw new Error("The assessment could not be deleted. Please retry.");
     sessionStorage.removeItem(deleteTokenStorageKey);
     deleteAssessmentButton.hidden = true;

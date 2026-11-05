@@ -1,4 +1,4 @@
-/** Submit credentials to the same-origin auth API and collect the first-login language. */
+/** Submit credentials to the configured account API and collect the first-login language. */
 const authForms = document.querySelectorAll("form[data-auth-mode]");
 const languageModal = document.querySelector("#language-modal");
 const languageOptions = [...document.querySelectorAll("[data-auth-language]")];
@@ -15,7 +15,7 @@ function showAuthStatus(form, message, type = "error") {
 async function submitJson(url, method, data) {
   let response;
   try {
-    response = await fetch(url, {
+    response = await window.EnterseedApi.request(url, {
       method,
       credentials: "same-origin",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -62,19 +62,26 @@ function openLanguagePrompt(form) {
 }
 
 function goToDashboard() {
-  const requestedPage = new URLSearchParams(location.search).get("next") || "/dashboard";
-  const target = new URL(requestedPage, location.origin);
-  const allowedRoutes = new Set([
-    "/dashboard", "/dashboard.html",
-    "/finance", "/finance.html",
-    "/marketing", "/marketing.html",
-    "/documents", "/documents.html",
-    "/boss-nana", "/boss-nana.html"
+  const requestedPage = new URLSearchParams(location.search).get("next") || "dashboard.html";
+  const target = new URL(requestedPage, document.baseURI);
+  const targetPage = target.pathname.split("/").pop();
+  const allowedPages = new Map([
+    ["dashboard", "dashboard.html"],
+    ["dashboard.html", "dashboard.html"],
+    ["finance", "finance.html"],
+    ["finance.html", "finance.html"],
+    ["marketing", "marketing.html"],
+    ["marketing.html", "marketing.html"],
+    ["documents", "documents.html"],
+    ["documents.html", "documents.html"],
+    ["boss-nana", "boss-nana.html"],
+    ["boss-nana.html", "boss-nana.html"]
   ]);
-  const safePath = target.origin === location.origin && allowedRoutes.has(target.pathname)
-    ? `${target.pathname}${target.search}${target.hash}`
-    : "/dashboard";
-  window.location.assign(safePath);
+  const safePage = allowedPages.get(targetPage);
+  const safeUrl = safePage
+    ? new URL(`${safePage}${target.search}${target.hash}`, document.baseURI)
+    : new URL("dashboard.html", document.baseURI);
+  window.location.assign(safeUrl.href);
 }
 
 languageOptions.forEach((option) => {
@@ -140,6 +147,7 @@ authForms.forEach((form) => {
 
     try {
       const result = await submitJson(endpoint, "POST", payload);
+      window.EnterseedApi.saveSessionToken(result.sessionToken, form.elements.remember?.checked);
       if (result.needsLanguageSelection) {
         openLanguagePrompt(form);
         return;

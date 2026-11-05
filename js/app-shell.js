@@ -1,9 +1,9 @@
 /** Shared authenticated layout for every workspace route. */
 const appNavigation = [
-  { href: "/dashboard", key: "dashboard", icon: "⌂" },
-  { href: "/finance", key: "finance", icon: "₱" },
-  { href: "/marketing", key: "marketing", icon: "◎" },
-  { href: "/documents", key: "documents", icon: "▤" }
+  { href: "dashboard.html", route: "/dashboard", key: "dashboard", icon: "⌂" },
+  { href: "finance.html", route: "/finance", key: "finance", icon: "₱" },
+  { href: "marketing.html", route: "/marketing", key: "marketing", icon: "◎" },
+  { href: "documents.html", route: "/documents", key: "documents", icon: "▤" }
 ];
 
 const appRouteDetails = {
@@ -15,7 +15,8 @@ const appRouteDetails = {
 };
 
 function currentAppRoute() {
-  const route = location.pathname.replace(/\.html$/, "").replace(/\/+$/, "") || "/dashboard";
+  const page = location.pathname.split("/").pop()?.replace(/\.html$/, "") || "dashboard";
+  const route = `/${page}`;
   return appRouteDetails[route] ? route : "/dashboard";
 }
 
@@ -31,7 +32,7 @@ function createNavigationLink(item, isMobile = false) {
   label.dataset.i18n = `appShell.${item.key}`;
   label.textContent = item.key[0].toUpperCase() + item.key.slice(1);
   link.append(icon, label);
-  if (location.pathname.replace(/\.html$/, "").replace(/\/+$/, "") === item.href) {
+  if (currentAppRoute() === item.route) {
     link.setAttribute("aria-current", "page");
   }
   return link;
@@ -61,10 +62,10 @@ function mountAppShell(user) {
   sidebar.setAttribute("aria-label", window.EnterseedI18n.t("appShell.primaryNavigation"));
   const brand = document.createElement("a");
   brand.className = "app-brand";
-  brand.href = "/dashboard";
+  brand.href = "dashboard.html";
   brand.setAttribute("aria-label", "Enterseed dashboard");
   const logo = document.createElement("img");
-  logo.src = "/logos/Icon White.png";
+  logo.src = "logos/Icon White.png";
   logo.alt = "";
   const brandName = document.createElement("span");
   brandName.textContent = "Enterseed";
@@ -87,12 +88,12 @@ function mountAppShell(user) {
   sectionHeading.className = "app-section-heading";
   const mobileBrand = brand.cloneNode(true);
   mobileBrand.className = "app-mobile-brand";
-  mobileBrand.querySelector("img").src = "/logos/Icon.png";
+  mobileBrand.querySelector("img").src = "logos/Icon.png";
   const breadcrumbs = document.createElement("nav");
   breadcrumbs.className = "app-breadcrumbs";
   breadcrumbs.setAttribute("aria-label", window.EnterseedI18n.t("appShell.breadcrumbs"));
   const sectionCrumb = document.createElement("a");
-  sectionCrumb.href = route;
+  sectionCrumb.href = `${route.slice(1)}.html`;
   sectionCrumb.dataset.i18n = `appShell.${details.section}`;
   sectionCrumb.textContent = window.EnterseedI18n.t(`appShell.${details.section}`);
   if (!details.breadcrumb) sectionCrumb.setAttribute("aria-current", "page");
@@ -139,6 +140,11 @@ function mountAppShell(user) {
   const email = document.createElement("span");
   email.className = "app-profile-email";
   email.textContent = user.email || "";
+  const publicSite = document.createElement("a");
+  publicSite.className = "app-public-site";
+  publicSite.href = "index.html";
+  publicSite.dataset.i18n = "appShell.publicSite";
+  publicSite.textContent = window.EnterseedI18n.t("appShell.publicSite");
   const logoutStatus = document.createElement("span");
   logoutStatus.className = "app-logout-status";
   logoutStatus.setAttribute("role", "status");
@@ -151,16 +157,17 @@ function mountAppShell(user) {
     logout.disabled = true;
     logoutStatus.textContent = "";
     try {
-      const response = await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+      const response = await window.EnterseedApi.request("/api/auth/logout", { method: "POST", credentials: "same-origin" });
       if (!response.ok && response.status !== 204) throw new Error("Could not end the session.");
-      location.replace("/login");
+      window.EnterseedApi.clearSessionToken();
+      location.replace("login.html");
     } catch (error) {
       console.error("Logout failed.", error);
       logout.disabled = false;
       logoutStatus.textContent = window.EnterseedI18n.t("appShell.logoutError");
     }
   });
-  profileMenu.append(email, logoutStatus, logout);
+  profileMenu.append(email, publicSite, logoutStatus, logout);
   profile.append(summary, profileMenu);
 
   const mobileChat = document.createElement("button");

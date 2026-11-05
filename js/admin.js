@@ -10,7 +10,7 @@ let adminKey = "";
 
 /** Send same-origin reviewer API requests with an in-memory bearer token. */
 async function adminRequest(endpoint, options = {}) {
-  const response = await fetch(endpoint, {
+  const response = await window.EnterseedApi.request(endpoint, {
     ...options,
     headers: { Authorization: `Bearer ${adminKey}`, ...(options.body ? { "Content-Type": "application/json" } : {}), ...options.headers }
   });

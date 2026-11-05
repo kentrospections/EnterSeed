@@ -1,14 +1,14 @@
 /** Keep the portal UI behind the same-origin authenticated session. */
 async function guardAuthenticatedPage() {
   try {
-    const response = await fetch("/api/auth/me", {
+    const response = await window.EnterseedApi.request("/api/auth/me", {
       credentials: "same-origin",
       headers: { Accept: "application/json" },
       cache: "no-store"
     });
     if (response.status === 401) {
       const returnTo = `${location.pathname.split("/").pop() || "dashboard.html"}${location.search}${location.hash}`;
-      location.replace(`/login?next=${encodeURIComponent(returnTo)}`);
+      location.replace(`login.html?next=${encodeURIComponent(returnTo)}`);
       return;
     }
     if (!response.ok) throw new Error("Session verification is temporarily unavailable.");
@@ -41,7 +41,7 @@ async function guardAuthenticatedPage() {
     message.textContent = "Please check your connection and sign in again to continue.";
     const link = document.createElement("a");
     link.className = "button button-dark";
-    link.href = "/login";
+    link.href = "login.html";
     link.textContent = "Go to log in";
     notice.append(heading, message, link);
     document.body.append(notice);

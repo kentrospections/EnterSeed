@@ -6,6 +6,7 @@
 /* Tablet layouts and two-column feature collapse. */
 @media (max-width: 940px) {
   .container { width: min(var(--container), calc(100% - 40px)); }
+  .app-content-root .supplier-layout { grid-template-columns: 1fr; }
   .header-inner { gap: 12px; }
   .primary-nav { gap: 12px; }
   .primary-nav a { font-size: 11px; }
@@ -37,7 +38,7 @@
   .brand-mark { width: 27px; height: 27px; }
   .site-header .brand::after { width: 120px; height: 30px; }
   .header-cta { min-height: 38px; margin-left: auto; padding-inline: 11px; font-size: 10px; }
-  .menu-toggle { display: grid; width: 38px; height: 38px; flex: 0 0 auto; gap: 4px; align-content: center; }
+  .menu-toggle { display: grid; width: 38px; height: 38px; flex: 0 0 auto; margin-left: 0; gap: 4px; align-content: center; }
   .menu-toggle span { display: block; width: 16px; height: 1.5px; background: var(--green); }
   .primary-nav { position: absolute; top: 65px; right: 0; left: 0; display: none; align-items: stretch; gap: 0; border-bottom: 1px solid var(--line); padding: 7px 18px 14px; background: var(--cream); box-shadow: 0 12px 15px rgb(38 56 46 / 7%); }
   .primary-nav.is-open { display: flex; flex-direction: column; }
@@ -71,8 +72,6 @@
   .disclaimer-note { margin-left: 43px; }
   .chat-topbar { padding-inline: 14px; }
   .chat-messages { min-height: 155px; padding: 15px; }
-  .prompt-chips { padding-inline: 14px; }
-  .chat-form { padding-inline: 14px; }
   .chat-footnote { padding-inline: 14px; }
   .supplier-toolbar { gap: 13px; }
   .search-box { width: 100%; }
@@ -150,10 +149,6 @@
   .preview-actions .button { width: 100%; }
 }
 
-@media (max-width: 350px) {
-  .header-actions .header-cta:first-child { display: none; }
-}
-
 /* Keep supporting copy and controls readable across every page and viewport. */
 body p:not(.eyebrow):not(.lead-copy) { font-size: max(16px, 1em); }
 body .page-intro > .container > p:not(.eyebrow):not(.notice-banner) { font-size: max(16px, 1em); }
@@ -167,7 +162,7 @@ body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 body select:not(.sr-only),
 body textarea:not(.sr-only) { font-size: max(16px, 1em); }
 body legend { font-size: max(16px, 1em); }
-body button:not(.icon-button):not(.send-button):not(.billing-toggle) { font-size: max(15px, 1em); }
+body button:not(.icon-button):not(.billing-toggle) { font-size: max(15px, 1em); }
 body td, body th { font-size: max(15px, 1em); }
 body .rate-table th,
 body .rate-table td,
@@ -224,7 +219,6 @@ body .addon-toggle-row strong,
 body .choice-card strong,
 body .shipping-math strong,
 body .price-line .currency,
-body .source-panel > h3 { font-size: 16px; }
 body .verified-badge span { font-size: 14px; }
 body .feature-point h3,
 body .overview-card h3,
@@ -245,7 +239,7 @@ body .button { min-height: 48px; }
 @media (max-width: 700px) {
   .header-inner > .header-cta { margin-left: 0; }
   .site-header .brand::after { width: clamp(80px, 24vw, 112px); }
-  .seedling-widget { right: 14px; bottom: 14px; }
+  .public-assistant-widget { right: 14px; bottom: 14px; }
 }
 
 @media (max-width: 390px) {
@@ -568,6 +562,7 @@ html.auth-pending body { visibility: hidden; }
 }
 
 @media (max-width: 700px) {
+  .supplier-hub-intro { align-items: flex-start; flex-direction: column; }
   .finance-input-grid, .finance-recommendation-grid { grid-template-columns: 1fr; }
   .finance-section-heading { gap: 10px; }
   .finance-report-metric { padding: 11px; }
@@ -579,6 +574,37 @@ html.auth-pending body { visibility: hidden; }
 @media (max-width: 520px) {
   .finance-report-grid, .finance-output-summary { grid-template-columns: 1fr; }
   .boss-nana-widget { right: 12px; bottom: 12px; }
+  .app-shell ~ .boss-nana-widget { bottom: calc(82px + env(safe-area-inset-bottom)); }
   .boss-nana-launcher { width: 56px; height: 56px; }
   .boss-nana-panel { width: min(390px, calc(100vw - 24px)); height: min(600px, calc(100dvh - 92px)); min-height: 320px; }
+}
+
+@media (max-width: 390px) {
+  .site-header.has-sidebar .header-inner { gap: 4px; }
+  .site-header.has-sidebar .brand-mark { width: 23px; height: 23px; }
+  .site-header.has-sidebar .brand::after { width: clamp(44px, 16vw, 64px); }
+  .site-header.has-sidebar .language-toggle { min-width: 48px; gap: 4px; padding-inline: 6px; }
+  .site-header.has-sidebar .header-actions .header-cta--register .header-cta-label {
+    flex: 0 0 auto;
+    font-size: 0;
+  }
+  .site-header.has-sidebar .header-actions .header-cta--register .header-cta-label::after {
+    content: "Sign up";
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 350px) {
+  .site-header.has-sidebar .header-actions .header-cta:first-child { display: flex; }
+}
+
+@media (max-width: 300px) {
+  .site-header.has-sidebar .brand::after { width: 38px; }
+  body .intro-strip-inner {
+    min-height: 58px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 12px;
+    padding-block: 10px;
+  }
 }

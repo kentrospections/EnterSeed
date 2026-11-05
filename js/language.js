@@ -120,7 +120,7 @@ async function setLanguage(language) {
   }
   if (window.EnterseedAccount) {
     try {
-      const response = await fetch("/api/auth/language", {
+      const response = await window.EnterseedApi.request("/api/auth/language", {
         method: "PATCH",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json", Accept: "application/json" },

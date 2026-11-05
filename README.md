@@ -1,10 +1,24 @@
 # Enterseed Platform
 
-Enterseed is a multi-page MSME support website focused on South Cotabato and nearby SOCCSKSARGEN communities. The site combines a source-aware registration assistant, local-only document drafts, a reviewed supplier directory, a server-backed readiness assessment, and a human support route.
+Enterseed is an MSME support website focused on South Cotabato and nearby SOCCSKSARGEN communities. The Marketing workspace brings strategy tools, the reviewed supplier directory, its map, and the listing application together in one page.
 
 This project also includes a Boss Narra-oriented product concept for a more complete MSME platform: a purple-and-orange web/mobile experience with language-aware onboarding, grounded AI assistance, finance and marketing modules, and filing support workflows.
 
 This is a small Node/Express deployment, not a static-only site. The server stores submissions in SQLite and serves the HTML pages and API from one origin. Payment processing, government filing, supplier identity checks, and professional legal or financial advice are not provided.
+
+## Public deployment (GitHub Pages + Render)
+
+The static website can be published at `https://tdalog-cell.github.io/EnterSeed/` without asking visitors to install Node.js or run `npm start`. GitHub Pages serves the HTML, CSS, and browser JavaScript; the Express API and SQLite data remain on Render.
+
+1. In GitHub, create a repository variable named `ENTERSEED_API_URL` with the HTTPS origin of the Render API (for example, `https://enterseed-api.onrender.com`, with no path or trailing slash).
+2. In Render, create a Blueprint from this repository using `render.yaml`. Review the current price before creating the paid web service and persistent disk. Keep the generated `ADMIN_API_KEY` private; add optional AI and email credentials in Render's environment settings.
+3. Wait for the Render service to become healthy at `/api/health`, then save its HTTPS origin in the GitHub variable.
+4. In the repository's **Settings → Pages**, choose **GitHub Actions** as the deployment source. Push or merge the workflow to `main`, or run **Deploy GitHub Pages** manually after the variable is set.
+5. Open `https://tdalog-cell.github.io/EnterSeed/`. The public welcome page is `index.html`; protected tools redirect unauthenticated visitors to the sign-in page. The integrated supplier directory and application are in Marketing.
+
+The Pages build fails intentionally if `ENTERSEED_API_URL` is missing or is not an HTTPS origin. The Render API allows browser requests only from the configured Pages origin. Cross-origin sign-in returns an opaque session token to that origin; the browser stores it in session storage by default, or local storage when “Keep me signed in” is selected. The server stores only a hash of the token. Never publish API or admin secrets in GitHub variables used by the static build.
+
+To check the static artifact locally, set `ENTERSEED_API_URL` to a valid HTTPS backend origin and run `node scripts/build-pages.mjs`; this builds `dist/` but does not deploy it.
 
 ## Boss Narra platform blueprint
 
@@ -58,7 +72,7 @@ This is a small Node/Express deployment, not a static-only site. The server stor
 
 - Registration and sign-in use the existing Express API, SQLite user records, Node `scrypt` password hashes, and random server-side sessions.
 - Registered accounts persist in the server's SQLite database; passwords are stored as scrypt hashes, never in IndexedDB or other browser storage.
-- Session IDs are stored as SHA-256 hashes in SQLite and issued in `HttpOnly`, `SameSite=Strict` cookies; production cookies also use `Secure`.
+- Session IDs are stored as SHA-256 hashes in SQLite. Same-origin deployments use `HttpOnly`, `SameSite=Strict` cookies; production cookies also use `Secure`. The allowlisted GitHub Pages origin receives a session token for its cross-origin API calls, stored in browser session storage by default or local storage when “Keep me signed in” is selected.
 - First-time sign-in requires a saved language preference (English, Filipino, or Hiligaynon). Hiligaynon is recorded, but parts of the interface still fall back to English.
 - Password recovery, email verification, social sign-in, and profile-management screens are not implemented. Configure and test these flows before production use.
 - This is a prototype authentication baseline, not a substitute for a production security assessment, deployment hardening, or privacy/legal review.
@@ -81,11 +95,12 @@ This is a small Node/Express deployment, not a static-only site. The server stor
 1. Start the server with `npm start`; confirm `/login` and `/register` contain no application navigation.
 2. Visit `/dashboard`, `/finance`, `/marketing`, `/documents`, and `/boss-nana` without a session; each should redirect to `/login` without showing workspace navigation or content.
 3. Register an account, select a language when prompted, then visit each workspace route. Confirm the same sidebar and top utility bar remain in place while breadcrumbs and active navigation update.
-4. Visit `/finance` and complete the assessment. Submit again after changing a value; reload to confirm the values and recommendations persist for that account.
-5. Use “Delete my saved assessment” and reload to confirm the assessment was removed. Log in as another account to confirm it cannot see the first account's figures.
-6. Open Boss Narra from the utility bar or floating button. Ask a tax or filing question and check that official source links and the verification disclaimer appear.
-7. Switch to Filipino and Hiligaynon using the language control. Confirm untranslated Hiligaynon keys render their English values and the layout remains usable at mobile widths.
-8. Open `/api/finance/assessment` or `/api/boss-nana` without a session and confirm they return `401`.
+4. Confirm sign-in without a requested page opens `/dashboard`; use the account menu’s “Main website” link to return to `/`. On mobile, verify the floating assistant does not cover the bottom navigation.
+5. Visit `/finance` and complete the assessment. Submit again after changing a value; reload to confirm the values and recommendations persist for that account.
+6. Use “Delete my saved assessment” and reload to confirm the assessment was removed. Log in as another account to confirm it cannot see the first account's figures.
+7. Open Boss Narra from the utility bar or floating button. Ask a tax or filing question and check that official source links and the verification disclaimer appear.
+8. Switch to Filipino and Hiligaynon using the language control. Confirm untranslated Hiligaynon keys render their English values and the layout remains usable at mobile widths.
+9. Open `/api/finance/assessment` or `/api/boss-nana` without a session and confirm they return `401`.
 
 
 ## Architecture
@@ -98,7 +113,8 @@ enterseed-platform/
 │   └── responsive.css
 ├── js/
 │   ├── app.js
-│   ├── chatbot.js
+│   ├── public-assistant.js
+│   ├── document-generator.js
 │   ├── auth.js
 │   ├── auth-guard.js
 │   ├── app-shell.js
@@ -126,7 +142,6 @@ enterseed-platform/
 ├── marketing.html
 ├── documents.html
 ├── efiling.html
-├── suppliers.html
 ├── pricing.html
 ├── about.html
 ├── onboarding.html
@@ -206,7 +221,7 @@ Supplier applications similarly enter the private queue and notify the support m
 
 The browser calls `/api/assistant`; the Gemini key stays on the server. Configure `GEMINI_API_KEY` using Google AI Studio and review the provider’s current model availability, free-tier quota, privacy, and terms. If the key is unset or the request fails, the server returns conservative local fallback guidance.
 
-The floating Seedling chat is a standalone browser module in `js/seedling-widget.js`; it uses the same-origin assistant endpoint and does not persist chat history. Requests accept `question`, optional `history`, and optional `language` (`en` or `fil`); omitting `language` keeps existing clients on English. The shared language selector and Filipino translations are in `js/language.js`, with the preference stored in the visitor’s browser.
+The public Boss Narra widget is implemented in `js/public-assistant.js` and uses the same-origin assistant endpoint without persisting chat history. Its launcher is shared across public pages; the business-tools page opens this widget rather than creating a second chat client. Local document outline generation is isolated in `js/document-generator.js` and does not send form data to the server. Requests accept `question`, optional `history`, and optional `language` (`en` or `fil`); omitting `language` keeps existing clients on English. The shared language selector and Filipino translations are in `js/language.js`, with the preference stored in the visitor’s browser.
 
 Each answer includes relevant source links and a **last link checked** date. Link-check date does not mean the source’s policy content was fully reviewed. As of 2026-10-19, the official South Cotabato and Koronadal sites were reachable. DTI’s BNRS portal rate-limited automated access, and the DTI FAQ content could not be independently fetched; those limitations are shown in the UI. Recheck source content periodically and update the date and review note only after a person verifies it. The fallback is a prompt/reference snippet, not a full searchable legal knowledge base or production RAG system.
 
