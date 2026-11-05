@@ -132,7 +132,7 @@ retentionTimer.unref();
 
 const app = express();
 app.disable('x-powered-by');
-app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : false);
+app.set('trust proxy', 1);
 
 // Security headers with Helmet (permissive enough for Dev and Leaflet maps)
 app.use(helmet({
@@ -141,11 +141,42 @@ app.use(helmet({
 }));
 app.use(express.json({ limit: '24kb' }));
 
-// Rate limiters
-const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false });
-const submissionLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false });
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false });
-const placeSearchLimiter = rateLimit({ windowMs: 1000, limit: 2, standardHeaders: 'draft-8', legacyHeaders: false });
+// Rate limiters with disabled X-Forwarded-For validation for cloud proxy environments
+const rateLimitValidateConfig = {
+  xForwardedForHeader: false,
+  forwardedHeader: false,
+  trustProxy: false,
+  default: false
+};
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  validate: rateLimitValidateConfig
+});
+const submissionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  validate: rateLimitValidateConfig
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  validate: rateLimitValidateConfig
+});
+const placeSearchLimiter = rateLimit({
+  windowMs: 1000,
+  limit: 2,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  validate: rateLimitValidateConfig
+});
 
 app.use('/api', apiLimiter);
 

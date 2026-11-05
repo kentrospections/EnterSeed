@@ -13,18 +13,27 @@ import { PricingView } from './views/PricingView';
 import { AboutView } from './views/AboutView';
 import { AdminView } from './views/AdminView';
 import { AuthView } from './views/AuthView';
+import { ArrowLeft, Sparkles } from 'lucide-react';
+
+const protectedPages: ActivePage[] = [
+  'dashboard',
+  'finance',
+  'marketing',
+  'documents',
+  'boss-nana'
+];
 
 const MainRouter: React.FC = () => {
   const { user, loading } = useAuth();
   const [activePage, setActivePage] = useState<ActivePage>(() => {
-    const hash = window.location.hash.replace('#', '');
+    const hash = window.location.hash.replace('#', '') as ActivePage;
     if (hash && [
       'dashboard', 'finance', 'marketing', 'documents', 'boss-nana',
       'efiling', 'pricing', 'about', 'admin', 'login', 'register'
     ].includes(hash)) {
-      return hash as ActivePage;
+      return hash;
     }
-    return 'dashboard';
+    return 'login';
   });
 
   // Keep hash in sync with active page
@@ -42,7 +51,81 @@ const MainRouter: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const renderContent = () => {
+  // If user is not logged in and attempts to access protected workspace routes, redirect to login
+  useEffect(() => {
+    if (!loading && !user && protectedPages.includes(activePage)) {
+      setActivePage('login');
+    }
+  }, [user, loading, activePage]);
+
+  // If user is already logged in and navigates to login or register, redirect to dashboard
+  useEffect(() => {
+    if (!loading && user && (activePage === 'login' || activePage === 'register')) {
+      setActivePage('dashboard');
+    }
+  }, [user, loading, activePage]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF7F1] flex flex-col items-center justify-center p-4">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#4A1D8F] to-[#FF8A3D] p-3 shadow-lg flex items-center justify-center animate-pulse mb-4">
+          <img src="/logos/Icon White.png" alt="Enterseed" className="w-8 h-8 object-contain" />
+        </div>
+        <p className="text-xs font-bold text-[#4A1D8F] tracking-wider uppercase">Loading Enterseed…</p>
+      </div>
+    );
+  }
+
+  // 1. Standalone Login / Registration Pages (Separated from workspace)
+  if (!user && (activePage === 'login' || activePage === 'register')) {
+    return <AuthView initialMode={activePage} setActivePage={setActivePage} />;
+  }
+
+  // 2. Unauthenticated views of public pages (e.g. About, Pricing, E-Filing, Admin) with a clean public header
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#FFF7F1] flex flex-col">
+        {/* Simple Public Header */}
+        <header className="bg-white/95 backdrop-blur-md border-b border-[#E9D9EF] px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+          <button
+            onClick={() => setActivePage('login')}
+            className="flex items-center gap-2.5"
+          >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#4A1D8F] to-[#FF8A3D] p-1.5 flex items-center justify-center shadow-xs">
+              <img src="/logos/Icon White.png" alt="Enterseed" className="w-5 h-5 object-contain" />
+            </div>
+            <span className="font-extrabold text-lg text-[#4A1D8F]">Enterseed</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActivePage('login')}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#4A1D8F] hover:bg-[#F1EAF8] px-3 py-1.5 rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Sign In</span>
+            </button>
+            <button
+              onClick={() => setActivePage('register')}
+              className="text-xs font-bold text-white bg-[#4A1D8F] hover:bg-[#2C154F] px-3.5 py-1.5 rounded-xl transition-colors shadow-xs"
+            >
+              Create Account
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 p-4 sm:p-8 max-w-6xl mx-auto w-full">
+          {activePage === 'pricing' && <PricingView />}
+          {activePage === 'about' && <AboutView />}
+          {activePage === 'efiling' && <EfilingView />}
+          {activePage === 'admin' && <AdminView />}
+        </main>
+      </div>
+    );
+  }
+
+  // 3. Authenticated Workspace (Wrapped in AppShell with Sidebar, Topbar, and Dashboard)
+  const renderWorkspaceContent = () => {
     switch (activePage) {
       case 'dashboard':
         return <DashboardView setActivePage={setActivePage} />;
@@ -62,10 +145,6 @@ const MainRouter: React.FC = () => {
         return <AboutView />;
       case 'admin':
         return <AdminView />;
-      case 'login':
-        return <AuthView initialMode="login" setActivePage={setActivePage} />;
-      case 'register':
-        return <AuthView initialMode="register" setActivePage={setActivePage} />;
       default:
         return <DashboardView setActivePage={setActivePage} />;
     }
@@ -73,7 +152,7 @@ const MainRouter: React.FC = () => {
 
   return (
     <AppShell activePage={activePage} setActivePage={setActivePage}>
-      {renderContent()}
+      {renderWorkspaceContent()}
     </AppShell>
   );
 };
